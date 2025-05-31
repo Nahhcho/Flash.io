@@ -15,4 +15,15 @@ type SuccessResponse<T = null> = ActionResponse<T> & { success: true };
 type ErrorResponse = ActionResponse<undefined> & { success: false };
 
 type APIErrorResponse = NextResponse<ErrorResponse>;
-type APIResponse<T = null> = NextResponse<SuccessResponse<T> | ErrorResponse>; 
+type APIResponse<T = null> = NextResponse<SuccessResponse<T> | ErrorResponse>;
+
+interface SignInWithOAuthParams {
+    provider: 'google',
+    providerAccountId: string,
+    user: {
+        email: string,
+        name: string,
+        image: string,
+        username: string
+    }
+}

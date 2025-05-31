@@ -1,32 +1,30 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
+import { api } from "./lib/api";
  
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Google],
-  session: {strategy: "jwt"},
   callbacks: {
-    async jwt({ token, account, profile }) {
-        if (account && profile) {
-            token.sub = profile.sub ?? undefined
+    async signIn({ user, account }) {
+        if (account?.type === "credentials") return true;
+        if (!account || !user) return false;
+
+        const userInfo = {
+            name: user.name!,
+            email: user.email!,
+            image: user.image!,
+            username: (user.name?.toLowerCase() as string) 
         }
 
-        return token
-    },
-    async signIn({profile}) {
-        const response = await fetch("http://127.0.0.1:8000/create_user", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                sub: profile?.sub
-            })
-        });
+        const response = (await api.auth.oAuthSignIn({ 
+            user: userInfo, 
+            provider: account.provider as "google",
+            providerAccountId: account.providerAccountId as string
+        }))
 
-        if (!response.ok) throw new Error("Request failed");
+        if (!response.success) return false;
 
-        const result = await response.json();
-        return true
+        return true;
     }
   }
 })

@@ -1,4 +1,5 @@
 import { signIn } from '@/auth'
+import { ROUTES } from '@/constants/routes'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
@@ -18,12 +19,11 @@ const Hero = () => {
           </p>
         </div>
 
-        <div onClick={async () => {
-          "use server";
-          await signIn("google", { redirectTo: "/" });
-        }} className='flex justify-center items-center rounded-[8px] cursor-pointer hover:bg-[#9597F3] bg-[#6366F1] max-w-[360px] h-[60px] xl:h-[80px] mt-[60px]'>
+        <Link href={ROUTES.SIGN_UP}>
+        <div className='flex justify-center items-center rounded-[8px] cursor-pointer hover:bg-[#9597F3] bg-[#6366F1] max-w-[360px] h-[60px] xl:h-[80px] mt-[60px]'>
           <p className='font-poppin font-semibold text-[22px] xl:text-[28px] text-white'>Start Learning Smarter</p>
         </div>
+        </Link>
  
       </div>
 

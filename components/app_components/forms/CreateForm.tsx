@@ -4,8 +4,9 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from 'react'
 import { DefaultValues, FieldValues, SubmitHandler, useForm } from "react-hook-form"
-import { AddCourseSchema } from "@/lib/validations";
+import { CreateCourseWithMaterialsSchema } from "@/lib/validations";
 import Image from "next/image";
+import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
 
 
 interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means to only allow T if it's a valid form data object (like an object of strings, numbers, etc
@@ -16,9 +17,9 @@ interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means 
 const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFormProps<T>) => {
     const buttonText = formType === "ADD_COURSE" ? "Add Course" : "Add Set";
     const [isOpen, setIsOpen] = useState(false);
-    const form = useForm<z.infer<typeof AddCourseSchema>>(
+    const form = useForm<z.infer<typeof CreateCourseWithMaterialsSchema>>(
         {
-            resolver: zodResolver(AddCourseSchema),
+            resolver: zodResolver(CreateCourseWithMaterialsSchema),
             defaultValues: defaultValues as DefaultValues<T> //So... what is DefaultValues<T>? It’s a utility type from React Hook Form that ensures: The shape of your defaultValues matches the fields in the form.
         }
     )
@@ -29,11 +30,26 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
 
         console.log(form.getValues())
 
-    }, [materials]);
+    }, [materials]); 
     
 
-    const handleSubmit: SubmitHandler<z.infer<typeof AddCourseSchema>> = async () => {
-        console.log(form.getValues())
+    const handleSubmit = async () => {
+        const validatedData = CreateCourseWithMaterialsSchema.safeParse({title: form.getValues("title"), materials: form.getValues("materials")});
+
+        console.log(validatedData.error);
+        if (validatedData.success) {
+            const formData = new FormData();
+
+            formData.append("title", form.getValues("title"));
+
+            const files = form.getValues("materials");
+            if (files) {
+                Array.from(files).forEach((file) => {
+                    formData.append("materials", file)
+                })
+            } 
+        }
+
         await new Promise((resolve) => setTimeout(resolve, 1000))
     };
 
@@ -58,10 +74,13 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
                         const currentFiles = form.getValues("materials");
 
                         if (newFiles && newFiles.length > 0) {
-                            const validNewFiles = Array.from(newFiles).filter((file) => file.type === "application/pdf")
+                            const validNewFiles = Array.from(newFiles).filter((file) => {
+                                const ext = file.name.split('.').pop()?.toLowerCase() as typeof ALLOWED_FILES[number];
+                                return ext && (ALLOWED_FILES as readonly string[]).includes(ext);
+                            })
                             
                             if (validNewFiles.length !== newFiles.length) {
-                                form.setError("materials", { message: "Files must be pdfs" })
+                                form.setError("materials", { message: "Only PDF, DOCX, PPTX, TXT, or CSV files are allowed." })
                             } else (form.trigger("materials"))
 
                             const mergedFiles = [...(currentFiles ? Array.from(currentFiles): []), ...Array.from(validNewFiles)];

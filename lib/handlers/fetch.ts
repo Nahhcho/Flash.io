@@ -6,7 +6,7 @@ function isError(error: unknown): error is Error {
     return error instanceof Error;
 }
 
-export async function fetchHandler<T>(url: string, options: FetchOptions = {}): Promise<T> {
+export async function fetchHandler(url: string, options: FetchOptions = {}) {
     const { timeout = 5000, headers: customHeaders = {}, ...restOptions } = options;
 
     const controller = new AbortController();
