@@ -1,15 +1,14 @@
-import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
+import { ALLOWED_FILES, ALLOWED_MIME_TYPES } from "@/constants/allowedFileTypes";
 import { z } from "zod";
 
 export const SignInWithoAuthSchema = z.object({
+    userInfo: z.object({
+      name: z.string().min(1, { message: "Name is required"}),
+      email: z.string().email({message: "Email is required"}),
+      image: z.string().url({message: "Invalid url"}).optional(),
+  }),
   provider: z.enum(["google"]),
-  proivderAccountId: z.string().min(1, { message: "Provider Account ID is requires"}),
-  user: z.object({
-    name: z.string().min(1, { message: "Name is required"}),
-    email: z.string().email({message: "Email is required"}),
-    username: z.string().min(3, "Username must be at least 3 characters long").optional(),
-    img: z.string().url({message: "Invalid url"}).optional(),
-  })
+  providerAccountId: z.string().min(1, { message: "Provider Account ID is required"}),
 })
 
 export const SignUpSchema = z.object({
@@ -42,30 +41,38 @@ export const SignInSchema = z.object({
   .max(100, { message: "Password cannot exceed 100 characters." })
 })
 
+
+// Get the union type from the array (e.g., "pdf" | "docx" | ...)
+type AllowedFileExtension = typeof ALLOWED_FILES[number];
+
 export const CreateCourseWithMaterialsSchema = z.object({
-  title: z.string().min(1, { message: "Title is required" }).max(30),
-  userId: z.string().length(24).regex(/^[0-9a-fA-F]+$/, { message: "Invalid userId format" }),
+  title: z
+    .string()
+    .min(1, { message: "Title is required" })
+    .max(50, { message: "Title must be at most 50 characters" }),
 
   materials: z
-    .custom<FileList>()
-    .refine(
-      (files) =>
-        !files ||
-        Array.from(files).every((file) => {
-          const ext = file.name.split(".").pop()?.toLowerCase() as typeof ALLOWED_FILES[number];
-          return ext && ALLOWED_FILES.includes(ext);
-        }),
-      { message: "Only PDF, DOCX, PPTX, TXT, or CSV files are allowed." }
-    )
+    .custom<FileList>((files): files is FileList => {
+      if (!files) return true;
+
+      if (!(files instanceof FileList)) return false;
+
+      const fileArray = Array.from(files);
+
+      const allValidTypes = fileArray.every((file) => {
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        return ext && ALLOWED_FILES.includes(ext as AllowedFileExtension);
+      });
+
+      return allValidTypes && fileArray.length <= 5;
+    }, {
+      message: "Only PDF, DOCX, PPTX, TXT, or CSV files are allowed (max 5 files)."
+    })
     .optional(),
 
-  url: z.string().url().optional(), // Only needed if user pastes a URL
+  url: z.string().url({ message: "Invalid URL" }).optional(),
 });
 
-export const AddFlashcardSetSchemea = z.object({
-    title: z.string().min(1).max(30).optional(),
-    materials: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/).optional())
-})
 
 export const UserSchema = z.object({
     name: z.string().min(1, { message: "Name is required"}),
@@ -74,9 +81,10 @@ export const UserSchema = z.object({
 })
 
 export const MaterialSchemaBeforeParsing = z.object({
-    materialName: z.string().min(1),
+    name: z.string().min(1, { message: "Name is required"}),
     url: z.string().url({message: "Please provide a valid url"}).optional(),
-    fileType: z.enum(ALLOWED_FILES).optional()
+    type: z.enum(ALLOWED_MIME_TYPES).optional(),
+    size: z.number().optional()
 })
 
 export const MaterialSchemaAfterParsing = z.object({
@@ -88,11 +96,24 @@ export const MaterialSchemaAfterParsing = z.object({
 })
 
 export const CourseSchema = z.object({
-    title: z.string().min(1).max(30),
-    userId: z.string().length(24).regex(/^[0-9a-fA-F]+$/, { message: "Invalid userId format" })
+    title: z.string().min(1, { message: "Title Required"}).max(50, { message: "Title cannot exceed 50 characters"}),
+    userId: z.string().min(1, { message: "User id required"})
 })
 
 export const CreateCourseSchema = z.object({
     course: CourseSchema,
     materials: z.array(MaterialSchemaBeforeParsing).optional(),
+})
+
+export const AccountSchema = z.object({
+  name: z.string(),
+  email: z.string().email({
+    message: "Please provide a valid email"
+  }),
+  provider: z.enum(["google"]),
+  providerAccountId: z.string(),
+  userId: z.string(),
+  image: z.string().url({
+    message: "Please provide a valid url"
+  }).optional()
 })

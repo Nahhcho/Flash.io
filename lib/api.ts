@@ -16,7 +16,16 @@ export const api = {
         ),
     },
     courses: {
-        getAll: (userId: string) => fetchHandler(`${API_BASE_URL}/courses/${userId}`),  
+        getAll: (userId: string) => fetchHandler(`${API_BASE_URL}/courses/${userId}`, {
+            method: "POST",
+            body: JSON.stringify({
+                userId
+            })
+        }),
+        create: (formData: FormData) => fetchHandler(`${API_BASE_URL}/upload`, {
+            method: "POST",
+            body: formData
+        })  
     },
     auth: {
         oAuthSignIn: ({ user, provider, providerAccountId }: SignInWithOAuthParams) => fetchHandler(`${API_BASE_URL}/${ROUTES.SIGN_IN_WITH_OAUTH}`, {
@@ -24,6 +33,14 @@ export const api = {
             body: JSON.stringify({
                 user,
                 provider,
+                providerAccountId
+            })
+        })
+    },
+    accounts: {
+        getByProviderId: (providerAccountId: string) => fetchHandler(`${API_BASE_URL}/accounts/provider`, {
+            method: "POST",
+            body: JSON.stringify({
                 providerAccountId
             })
         })

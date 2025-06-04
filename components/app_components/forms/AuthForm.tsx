@@ -59,7 +59,7 @@ const AuthForm = <T extends FieldValues>({ type, schema, defaultValues }: AuthFo
         </div>
     </form>
     <button onClick={async () => {
-        signIn("google")
+        signIn("google", { callbackUrl: "/" })
     }} className='flex gap-2 bg-white rounded-[8px] h-[45px] items-center justify-center cursor-pointer mt-4'>
         <Image src={"/google.png"} width={25} height={20} alt='google_img'/>
         <p className='font-medium'>Login with Google</p>

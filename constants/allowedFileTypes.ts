@@ -12,7 +12,7 @@ export const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
   "text/plain",
   "text/csv"
-]
+] as const;
 
 export type AllowedFileTypes = typeof ALLOWED_FILES[number]
 

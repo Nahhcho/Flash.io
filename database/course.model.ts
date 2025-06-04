@@ -1,6 +1,6 @@
 import { model, models, Schema, Types } from "mongoose";
 
-interface ICourse {
+export interface ICourse {
     title: string;
     userId: Types.ObjectId;
 }

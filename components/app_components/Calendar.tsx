@@ -30,7 +30,6 @@ const Calendar = () => {
 
   return (
     <>
-    <header className='font-sora text-[32px] col-start-4 col-end-13 font-semibold text-white'>Your Study Plan</header>
     <div className='col-start-4 col-end-13 grid grid-cols-7 pt-[45px] pb-[26px]'>
         {days.map((day, index) => (
             

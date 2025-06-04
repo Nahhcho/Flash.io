@@ -4,6 +4,11 @@ import QuizCard from '../../components/app_components/cards/QuizCard'
 import CourseCard from '../../components/app_components/cards/CourseCard'
 import Image from 'next/image'
 import CreateForm from '@/components/app_components/forms/CreateForm'
+import { auth } from '@/auth'
+import UserAvatar from '@/components/app_components/UserAvatar'
+import { api } from '@/lib/api'
+import { ActionResponse } from '@/types/global'
+import { ICourse } from '@/database/course.model'
 
 export const quizzes = [
     {
@@ -28,25 +33,22 @@ export const quizzes = [
     }
 ]
 
-const courses = [
-    {
-        id: 1,
-        title: "Biology 101"
-    },
-    {
-        id: 2,
-        title: "Math 220"
-    }
-]
+const App = async () => {
+    const session = await auth();
+    console.log(session)
 
-const App = () => {
-
+    const res = await (api.courses.getAll(session!.user!.id!)) as ActionResponse<ICourse[]>
+    const courses = res.data
+    console.log("Courses", courses)
 
   return (
    
         <>
+                <header className='flex justify-between items-center font-sora text-[32px] col-start-4 col-end-13 font-semibold text-white'>
+                    Your Study Plan
+                    <UserAvatar image={session?.user?.image} />
+                </header>
             <Calendar />
-
             <div className='col-start-4 col-end-12 pt-[70px]'>
                 <ProgressBar />
                 <span className='flex font-sora text-[22px] justify-center pt-[17px] text-white'>Consistency beats cramming. Keep going!</span>
@@ -60,8 +62,8 @@ const App = () => {
             </div>
             <header className='col-start-4 col-end-13 font-sora font-semibold text-white text-[32px] pt-[70px]'>All Courses</header>
             <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] pt-[30px] col-start-4 col-end-13'>
-                {courses.map((course) => (
-                    <CourseCard key={course.id} title={course.title}/>
+                {courses && courses.map((course: ICourse) => (
+                    <CourseCard key={course.title} title={course.title}/>
                 ))}
             </div>
             <CreateForm formType="ADD_COURSE" defaultValues={{ title: "" }}/>

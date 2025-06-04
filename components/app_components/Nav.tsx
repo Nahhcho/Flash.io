@@ -1,5 +1,6 @@
 "use client";
 
+import { signOut } from 'next-auth/react';
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -20,7 +21,9 @@ const Nav = () => {
   return (
     <div className='w-[226px] bg-[#A78BFA] h-screen pl-[25px] pt-[40px] fixed top-0 left-0'>
         <Link href={'/about'}>
-        <header className='font-poppin font-semibold text-[42px]'>Logo</header>
+        <header onClick={() => {
+            signOut({ redirectTo: "/about"})
+        }} className='font-poppin font-semibold text-[42px]'>Logo</header>
         </Link>
         <ul className='space-y-5 pt-4'>
             <li >

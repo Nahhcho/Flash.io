@@ -1,5 +1,4 @@
 "use client";
- 
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from 'react'
@@ -7,12 +6,14 @@ import { DefaultValues, FieldValues, SubmitHandler, useForm } from "react-hook-f
 import { CreateCourseWithMaterialsSchema } from "@/lib/validations";
 import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
-
+import { api } from "@/lib/api";
 
 interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means to only allow T if it's a valid form data object (like an object of strings, numbers, etc
     formType: "ADD_COURSE" | "ADD_SET";
     defaultValues: T;
 }
+
+type FormSchema = z.infer<typeof CreateCourseWithMaterialsSchema>;
 
 const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFormProps<T>) => {
     const buttonText = formType === "ADD_COURSE" ? "Add Course" : "Add Set";
@@ -33,24 +34,18 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
     }, [materials]); 
     
 
-    const handleSubmit = async () => {
-        const validatedData = CreateCourseWithMaterialsSchema.safeParse({title: form.getValues("title"), materials: form.getValues("materials")});
-
-        console.log(validatedData.error);
-        if (validatedData.success) {
-            const formData = new FormData();
-
-            formData.append("title", form.getValues("title"));
-
-            const files = form.getValues("materials");
-            if (files) {
-                Array.from(files).forEach((file) => {
-                    formData.append("materials", file)
-                })
-            } 
+    const handleSubmit: SubmitHandler<FormSchema> = async (data: FormSchema) => {
+        const formData = new FormData();
+        const { title, materials } = data;
+        formData.append("title", title);
+        
+        if (materials) {
+            for (const file of materials) {
+                formData.append("materials", file);
+            }
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        api.courses.create(formData);
     };
 
     
@@ -62,7 +57,8 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
             <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 w-screen' onClick={() => {setIsOpen(false); form.reset()}}>
             <form onSubmit={form.handleSubmit(handleSubmit)} onClick={(e) => {e.stopPropagation()}} className='flex-col w-[791px] bg-[#1F2937] rounded-[10px] px-[100px] py-[35px]'>
                 <p className='font-sora text-white text-[28px] pb-[10px]'>Course Name</p>
-                <input {...form.register("title")} className='mb-[20px] h-[54px] bg-[#3D516D] rounded-[10px] w-full text-white font-sora px-[16px] focus:outline-none' placeholder='title'/>
+                <input {...form.register("title")} className='mb-[5px] h-[54px] bg-[#3D516D] rounded-[10px] w-full text-white font-sora px-[16px] focus:outline-none' placeholder='title'/>
+                {form.formState.errors.title && <p className="text-red-500 font-sora text-[18px]">{form.formState.errors.title.message}</p>}
                 <p className='pb-[10px] font-sora text-white text-[28px]'>Course Materials (optional)</p>
                 <label className="cursor-pointer">
                 <input 
