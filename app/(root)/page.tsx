@@ -1,6 +1,6 @@
 import Calendar from '../../components/app_components/Calendar'
 import ProgressBar from '../../components/app_components/ProgressBar'
-import QuizCard from '../../components/app_components/cards/QuizCard'
+import QuizCard from '../../components/app_components/cards/SetCard'
 import CourseCard from '../../components/app_components/cards/CourseCard'
 import Image from 'next/image'
 import CreateForm from '@/components/app_components/forms/CreateForm'
@@ -10,34 +10,13 @@ import { api } from '@/lib/api'
 import { ActionResponse } from '@/types/global'
 import { ICourse } from '@/database/course.model'
 
-export const quizzes = [
-    {
-        title: "CMP 310 Final Review",
-        terms: 10,
-        completed: false  
-    },
-    {
-        title: "Math 520 Quiz Review",
-        terms: 25,
-        completed: true
-    },
-    {
-        title: "Biology 101 Midterm Review",
-        terms: 11,
-        completed: true
-    },
-    {
-        title: "Physics 220 Test 1 Review",
-        terms: 22,
-        completed: false  
-    }
-]
 
 const App = async () => {
     const session = await auth();
     console.log(session)
 
     const res = await (api.courses.getAll(session!.user!.id!)) as ActionResponse<ICourse[]>
+    console.log("RESULT:, ", res)
     const courses = res.data
     console.log("Courses", courses)
 
@@ -56,9 +35,7 @@ const App = async () => {
             <div className='col-start-12 pt-[40px] flex justify-center '> <Image src={'/trophy.png'} width={71} height={71} alt='trophy' className='w-[71px] h-[71px]'/></div>
             <header className='col-start-4 col-end-13 font-sora font-semibold text-white text-[32px] pt-[70px]'>Today&apos;s Quizzes</header>
             <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] pt-[30px] col-start-4 col-end-13'>
-                {quizzes.map((quiz, index) => (
-                    <QuizCard key={index} quiz={quiz} />
-                ))}
+                // TODO: EXAM SET QUIZZES
             </div>
             <header className='col-start-4 col-end-13 font-sora font-semibold text-white text-[32px] pt-[70px]'>All Courses</header>
             <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] pt-[30px] col-start-4 col-end-13'>

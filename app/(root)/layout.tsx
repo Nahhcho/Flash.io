@@ -1,10 +1,13 @@
 import React from 'react'
 import Nav from '../../components/app_components/Nav'
 import { SessionProvider } from "next-auth/react";
+import { auth } from '@/auth';
 
-const layout = ({children}: {children: React.ReactNode}) => {
+const layout = async ({children}: {children: React.ReactNode}) => {
+  const session = await auth();
+
   return (
-    <SessionProvider>
+    <SessionProvider session={session}>
       <div className='grid grid-cols-12 px-[120px] pb-[120px] pt-[48px] bg-[#1F2937]'>
         <Nav />
         {children}

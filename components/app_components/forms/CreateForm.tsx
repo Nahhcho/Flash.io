@@ -7,6 +7,10 @@ import { CreateCourseWithMaterialsSchema } from "@/lib/validations";
 import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
 import { api } from "@/lib/api";
+import { useSession } from "next-auth/react";
+import { auth } from "@/auth";
+import { useRouter } from "next/navigation";
+import { error } from "console";
 
 interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means to only allow T if it's a valid form data object (like an object of strings, numbers, etc
     formType: "ADD_COURSE" | "ADD_SET";
@@ -16,6 +20,8 @@ interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means 
 type FormSchema = z.infer<typeof CreateCourseWithMaterialsSchema>;
 
 const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFormProps<T>) => {
+    const session = useSession();
+    const router = useRouter();
     const buttonText = formType === "ADD_COURSE" ? "Add Course" : "Add Set";
     const [isOpen, setIsOpen] = useState(false);
     const form = useForm<z.infer<typeof CreateCourseWithMaterialsSchema>>(
@@ -25,27 +31,30 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
         }
     )
 
-    const materials = form.watch("materials");
-
-    useEffect(() => {
-
-        console.log(form.getValues())
-
-    }, [materials]); 
-    
-
     const handleSubmit: SubmitHandler<FormSchema> = async (data: FormSchema) => {
         const formData = new FormData();
         const { title, materials } = data;
-        formData.append("title", title);
+        const userId = session!.data!.user!.id!
         
+        formData.append("title", title);
+
         if (materials) {
             for (const file of materials) {
                 formData.append("materials", file);
             }
         }
 
-        api.courses.create(formData);
+        // const res = await api.courses.create(formData, userId);
+
+        // if (!res.success) {
+        //     console.log("Response not ok: ", res.error);
+        // }
+        // else {
+        //     const courseId = res!.data!._id!
+        //     console.log(courseId)
+        //     router.push(`courseDetails/${courseId}`)
+        // }
+        
     };
 
     
@@ -122,7 +131,7 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
                 {form.formState.errors.materials && <p className="text-red-500 font-sora text-[18px]">{form.formState.errors.materials.message}</p>}
 
                 <button type="submit" disabled={form.formState.isSubmitting} className='flex justify-center cursor-pointer text-white font-sora  mt-[30px] font-semibold text-[24px] rounded-[10px] bg-[#6366F1] hover:bg-[#898BF4] w-[48%] py-[19px] '>
-                    {buttonText}
+                    {form.formState.isSubmitting ? "Submitting..." : buttonText }
                 </button>
             </form>
             </div>

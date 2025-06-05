@@ -16,16 +16,14 @@ export const api = {
         ),
     },
     courses: {
-        getAll: (userId: string) => fetchHandler(`${API_BASE_URL}/courses/${userId}`, {
-            method: "POST",
-            body: JSON.stringify({
-                userId
-            })
+        getAll: (userId: string) => fetchHandler(`${API_BASE_URL}/users/${userId}/courses`, {
+            method: "GET"
         }),
-        create: (formData: FormData) => fetchHandler(`${API_BASE_URL}/upload`, {
+        create: (formData: FormData, userId: string) => fetchHandler(`${API_BASE_URL}/users/${userId}/courses`, {
             method: "POST",
             body: formData
-        })  
+        }),
+        getSets: (courseId: string) => fetchHandler(`${API_BASE_URL}/courses/${courseId}/sets`),
     },
     auth: {
         oAuthSignIn: ({ user, provider, providerAccountId }: SignInWithOAuthParams) => fetchHandler(`${API_BASE_URL}/${ROUTES.SIGN_IN_WITH_OAUTH}`, {

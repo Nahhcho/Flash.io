@@ -2,25 +2,23 @@ import { ALLOWED_FILES, AllowedFileTypes } from "@/constants/allowedFileTypes";
 import { model, models, Schema, Types } from "mongoose";
 
 interface IMaterial {
-    materialName: string;
-    fileType?: AllowedFileTypes;
+    name: string;
     url?: string;
+    size?: number;
+    setId: Types.ObjectId;
     courseId: Types.ObjectId;
     parsedText: string;
     createdAt?: Date;
-    setIds?: Types.ObjectId[];
-    examSetIds?: Types.ObjectId[];
 }
 
 const MaterialSchema = new Schema<IMaterial>(
     {
-        materialName: { type: String, required: true },
-        fileType: { type: String, enum: ALLOWED_FILES },
+        name: { type: String, required: true },
+        size: { type: String },
         url: { type: String },
-        courseId: { type: Schema.Types.ObjectId, ref: "Coures" , required: true},
-        setIds: [{ type: Schema.Types.ObjectId, ref: "FlashcardSet"}],
-        examSetIds: [{ type: Schema.Types.ObjectId, ref: "ExamSet"}],
-        parsedText: { type: String },
+        courseId: { type: Schema.Types.ObjectId, ref: "Courses" , required: true},
+        setId: { type: Schema.Types.ObjectId, ref: "FlashcardSet", required: true},
+        parsedText: { type: String, required: true },
     },
     {
         timestamps: true

@@ -1,11 +1,11 @@
 import dbconnect from "@/lib/mongoose";
-import { CourseSchema, MaterialSchemaBeforeParsing } from "@/lib/validations";
+import { CourseSchema, MaterialSchemaBeforeCreate } from "@/lib/validations";
 import formidable, { Fields, Files } from "formidable";
 import { IncomingForm } from "formidable"; 
 import { NextApiRequest, NextApiResponse } from "next";
 import mongoose from "mongoose";
 import path from "path";
-import { UnauthorizedError, ValidationError } from "@/lib/http-errors";
+import { NotFoundError, UnauthorizedError, ValidationError } from "@/lib/http-errors";
 import { auth } from "@/auth";
 import Course from "@/database/course.model";
 import fs from "fs/promises";
@@ -17,6 +17,10 @@ import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import PdfParse from "pdf-parse";
 import { buffer } from "stream/consumers";
+import Material from "@/database/material.model";
+import handlerError from "@/lib/handlers/error";
+import { APIErrorResponse } from "@/types/global";
+import { parseForm } from "@/lib/parsers/parse-form";
 
 export const config = {
   api: {
@@ -26,66 +30,88 @@ export const config = {
 
 
 export default async function CourseWithFilesPOST(req: NextApiRequest, res: NextApiResponse) {
+    
+    await dbconnect();
+    
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const form = new IncomingForm({
-            keepExtensions: true,
-            multiples: true
-        })
-    
-        const { fields, files }: { fields: Fields, files: Files} = await new Promise((resolve, reject) => {
-            form.parse(req, (err, fields, files) => {
-                if (err) reject(err);
-                resolve({ fields, files }) 
-            })
-        })
-    
-        const uploadedFiles = Array.isArray(files.materials) ? files.materials : [files.materials];
+        const { fields, files } = await parseForm(req as any);
 
-        const fileList = await Promise.all(
-            uploadedFiles.map(async (file) => {
-                if (!file) throw new Error("Error handling file")
+        if (!(fields?.title)) throw new NotFoundError("title");
         
-                const ext = path.extname(file.originalFilename!).toLowerCase();
-                const buffer = await fs.readFile(file.filepath)
-                let parsedText = "";
+        if (!(fields?.userId)) throw new NotFoundError("userId");
         
-                switch (ext) {
-                    case ".txt":
-                        parsedText = buffer.toString();
-                        break;
+        const title = fields.title[0];
+        const userId = fields.userId[0];
+    
+        const validatedCourseData = CourseSchema.safeParse({ title, userId });
+
+        if (!validatedCourseData.success) throw new ValidationError(validatedCourseData.error.flatten().fieldErrors);
+
+        const [course] = await Course.create([{ title, userId }], { session });
         
-                    case ".pdf":
-                        parsedText = (await pdfParse(buffer)).text;
-                        break;
-                    
-                    case ".docx":
-                        parsedText = (await mammoth.extractRawText({ buffer })).value;
-                        break;
-                    
-                    case ".cvs":
-                        parsedText = buffer.toString();
-                        break;
-                }
-        
-        
-                return ({
-                    name: file.originalFilename,
-                    parsedText
-                })
-            })
-        ) 
+        console.log("FILES: ", files)
+        if(files && Object.keys(files).length > 0) {
+            const uploadedFiles = Array.isArray(files.materials) ? files.materials : [files.materials];
             
-
-        const title = fields!.title![0]
+            const fileList = await Promise.all(
+                uploadedFiles.map(async (file) => {
+                    if (!file) throw new Error("Error handling file")
+            
+                    const ext = path.extname(file.originalFilename!).toLowerCase();
+                    const buffer = await fs.readFile(file.filepath)
+                    let parsedText = "";
+            
+                    switch (ext) {
+                        case ".txt":
+                            parsedText = buffer.toString();
+                            break;
+            
+                        case ".pdf":
+                            parsedText = (await pdfParse(buffer)).text;
+                            break;
+                        
+                        case ".docx":
+                            parsedText = (await mammoth.extractRawText({ buffer })).value;
+                            break;
+                        
+                        case ".cvs":
+                            parsedText = buffer.toString();
+                            break;
+                    }
+            
+            
+                    return ({
+                        name: file.originalFilename,
+                        parsedText,
+                        size: file.size,
+                    })
+                })
+            ) 
+            
+            const materialList = await Promise.all(fileList.map(async (file) => {
+                const validatedFile = MaterialSchemaBeforeCreate.safeParse(file);
+                if (!validatedFile.success) throw new ValidationError(validatedFile.error.flatten().fieldErrors);
     
-        console.log("title", title);
-        console.log("files", fileList);
-        console.log("API HIT")
+                const data = validatedFile.data
+                const material = await Material.create([{...data, courseId: course.id}], {session});
+                return material
+            }))
+
+        }
+        
+        // session.commitTransaction();
+
+        return res.status(201).json({ data: course, success: true });
+        
     } catch (error) {
+        await session.abortTransaction();
         console.log(error)
+        return res.status(500).json({ "There was an error: ": error })
     }
 
-    let extractedTextForGpt = "";
 
     // const materialsMeta = await Promise.all(
     // validFiles.map(async (file) => {

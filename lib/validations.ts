@@ -80,19 +80,21 @@ export const UserSchema = z.object({
     img: z.string().url({ message: "Please provide a valid URL"}).optional(),
 })
 
-export const MaterialSchemaBeforeParsing = z.object({
-    name: z.string().min(1, { message: "Name is required"}),
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+export const MaterialSchemaBeforeCreate = z.object({
+    name: z.string().min(1),
     url: z.string().url({message: "Please provide a valid url"}).optional(),
-    type: z.enum(ALLOWED_MIME_TYPES).optional(),
-    size: z.number().optional()
+    parsedText: z.string().min(1, { message: "No text was parsed"}),
+    size: z.number().max(MAX_FILE_SIZE, { message: "File cannot exceed 10 MB" }).optional()
 })
 
-export const MaterialSchemaAfterParsing = z.object({
-    materialName: z.string().min(1),
+export const MaterialSchemaAfterCreate = z.object({
+    name: z.string().min(1),
     url: z.string().url({message: "Please provide a valid url"}).optional(),
-    courseId: z.string().length(24).regex(/^[0-9a-fA-F]+$/, { message: "Invalid userId format" }),
-    fileType: z.enum(ALLOWED_FILES).optional(),
-    parsedText: z.string().min(1, { message: "No text was parsed"})
+    parsedText: z.string().min(1, { message: "No text was parsed"}),
+    courseId: z.string().min(1, { message: "Course ID is required"}),
+    size: z.number().max(MAX_FILE_SIZE, { message: "File cannot exceed 10 MB" })
 })
 
 export const CourseSchema = z.object({
@@ -102,7 +104,7 @@ export const CourseSchema = z.object({
 
 export const CreateCourseSchema = z.object({
     course: CourseSchema,
-    materials: z.array(MaterialSchemaBeforeParsing).optional(),
+    materials: z.array(MaterialSchemaBeforeCreate).optional(),
 })
 
 export const AccountSchema = z.object({
@@ -116,4 +118,16 @@ export const AccountSchema = z.object({
   image: z.string().url({
     message: "Please provide a valid url"
   }).optional()
-})
+});
+
+export const FlashcardSetSchema = z.object({
+  title: z.string().min(1, { message: "Title is required"}).optional(),
+  courseId: z.string().min(1, { message: "CourseId is required"}),
+  type: z.enum(["Exam", "Regular"], {message: "Improper type"}),
+  terms: z.number().min(1, {message: "Number of terms required"}).optional(),
+});
+
+export const FlashcardSchema = z.object({
+  question: z.string().min(1, { message: "Question required"}),
+  answer: z.string().min(1, { message: "Answer required"})
+});
