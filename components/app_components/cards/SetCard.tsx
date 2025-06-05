@@ -1,5 +1,4 @@
-import { IFlashcardSet, IFlashcardSetDoc } from '@/database/flashcard-set.model';
-import Image from 'next/image';
+import {  IFlashcardSetDoc } from '@/database/flashcard-set.model';
 import Link from 'next/link';
 import React from 'react'
 
@@ -10,7 +9,7 @@ interface Props {
 const SetCard = ( { set } : Props) => {
 
   return (
-    <Link href={'/courseDetails/1/quiz/1'}>
+    <Link href={`/quiz/${set._id}`}>
     <div className='bg-[#3D516D] hover:bg-[#4F6B92] cursor-pointer rounded-[10px] h-[250px] relative flex flex-col'>
         {
             //quiz.completed && <Image src={'/checked.png'} width={22} height={22} alt='checked' className='absolute right-0 -translate-y-3 translate-x-2'/>

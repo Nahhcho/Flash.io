@@ -2,8 +2,6 @@ import Course from "@/database/course.model";
 import handlerError from "@/lib/handlers/error"
 import { NotFoundError, ValidationError } from "@/lib/http-errors";
 import dbconnect from "@/lib/mongoose"
-import { parseForm } from "@/lib/parsers/parse-form";
-import { parseMaterials } from "@/lib/parsers/parse-materials";
 import { CourseSchema } from "@/lib/validations";
 import { APIErrorResponse } from "@/types/global"
 import { NextResponse } from "next/server";
@@ -18,6 +16,7 @@ export async function GET(
         params: Promise<{ userId: string }>
     }
 ) {
+    console.log("GET HIT");
     try {
         console.log("GET COURSES API HIT");
         await dbconnect();
@@ -44,26 +43,27 @@ export async function GET(
 //     }
 // };
 
-export async function POST(req: Request) {
-    
+export async function POST(req: Request, {params}: {params: Promise<{userId: string}>}) {
+    const { parseMaterials } = await import("@/lib/parsers/parse-materials");
+
     await dbconnect();
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        console.log("It's hittin me ")
-        const { fields, files } = await parseForm(req as any);
+        console.log("POST hit")
+        const formData = await req.formData();
+        const title = formData.get("title");
+        const files = formData.getAll("materials") as File[];
+        const { userId } = await params;
 
-        if (!(fields.title)) {
+        if (!(title)) {
             throw new NotFoundError("title");
         }
 
-        if (!(fields.userId)) {
+        if (!(userId)) {
             throw new NotFoundError("userId");
         }
-
-        const title = fields.title[0];
-        const userId = fields.userId[0];
 
         const validatedData = CourseSchema.safeParse({title, userId});
 
@@ -74,6 +74,8 @@ export async function POST(req: Request) {
         const [course] = await Course.create([{title, userId}], {session});
 
         if (files) {
+            console.log("made it here");
+            console.log("not here")
             await parseMaterials(
                 files,
                 course.id,

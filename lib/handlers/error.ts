@@ -44,6 +44,15 @@ const handlerError = (error: unknown, responseType: ResponseType = "server") => 
         )
     }
 
+    if (error instanceof ValidationError) {
+        return formatResponse(
+            responseType,
+            error.statusCode,
+            error.message,
+            error.errors
+        )
+    }
+
     if (error instanceof Error) {
         return formatResponse(
             responseType,

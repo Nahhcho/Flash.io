@@ -1,4 +1,4 @@
-import { ALLOWED_FILES, ALLOWED_MIME_TYPES } from "@/constants/allowedFileTypes";
+import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
 import { z } from "zod";
 
 export const SignInWithoAuthSchema = z.object({
@@ -98,6 +98,7 @@ export const MaterialSchemaAfterCreate = z.object({
 })
 
 export const CourseSchema = z.object({
+    courseId: z.string().min(1, { message: "Course Id required"}).optional(),
     title: z.string().min(1, { message: "Title Required"}).max(50, { message: "Title cannot exceed 50 characters"}),
     userId: z.string().min(1, { message: "User id required"})
 })

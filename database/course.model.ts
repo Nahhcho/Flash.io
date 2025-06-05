@@ -1,10 +1,11 @@
-import { model, models, Schema, Types } from "mongoose";
+import { HydratedDocument, model, models, Schema, Types } from "mongoose";
 
 export interface ICourse {
     title: string;
     userId: Types.ObjectId;
 }
 
+export type ICourseDoc = HydratedDocument<ICourse>;
 const CourseSchema = new Schema<ICourse>(
     {
         title: { type: String, required: true },

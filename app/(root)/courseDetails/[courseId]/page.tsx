@@ -5,23 +5,28 @@ import { api } from '@/lib/api'
 import SetCard from '@/components/app_components/cards/SetCard'
 import { IFlashcardSetDoc } from '@/database/flashcard-set.model'
 import { error } from 'console'
+import { ICourseDoc } from '@/database/course.model'
 
 
 
 const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }>}) => {
   const { courseId } = await params;
-  const res = await api.courses.getSets(courseId);
+  let res = await api.courses.getSets(courseId);
   
   if (!res.success) {
     console.log("Error fetching response: ", error)
-    return null;
   }
 
-  const sets = res.data as IFlashcardSetDoc[];
+  const sets = res.success ? res.data as IFlashcardSetDoc[] : [];
+
+  res = await api.courses.getById(courseId);
+  console.log(res)
+  const course = res.success ? res.data as ICourseDoc : null;
+  
 
   return (
     <div className='col-start-4 col-end-13 min-h-screen'>
-        <header className=' text-white text-[32px] font-sora font-semibold pb-[25px]'>Biology 101</header>
+        <header className=' text-white text-[32px] font-sora font-semibold pb-[25px]'>{course?.title}</header>
     
         <hr className=' w-full border-[#2E3D52]  mb-[70px]'/>
 
@@ -32,8 +37,8 @@ const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }>}
         <p className='font-sora text-white text-[32px] pb-[30px] mt-[100px]'>All Biology 101 Sets</p>
 
             <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] pb-[30px] col-start-4 col-end-13'>
-                {sets.map((set: IFlashcardSetDoc, index) => (
-                    <SetCard set={set} />
+                {sets.map((set: IFlashcardSetDoc) => (
+                    <SetCard key={set.title} set={set}/>
                 ))}
             </div>
         

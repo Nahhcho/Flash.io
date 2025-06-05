@@ -1,4 +1,4 @@
-import { model, models, Schema, Types } from "mongoose";
+import { HydratedDocument, model, models, Schema, Types } from "mongoose";
 
 interface IFlashcard {
     question: string;
@@ -6,6 +6,7 @@ interface IFlashcard {
     setId: Types.ObjectId;
 }
 
+export type IFlashcardDoc = HydratedDocument<IFlashcard>;
 const FlashcardSchema = new Schema(
     {
         question: { type: String, required: true},

@@ -1,16 +1,15 @@
 "use client";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { DefaultValues, FieldValues, SubmitHandler, useForm } from "react-hook-form"
 import { CreateCourseWithMaterialsSchema } from "@/lib/validations";
 import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
 import { api } from "@/lib/api";
 import { useSession } from "next-auth/react";
-import { auth } from "@/auth";
 import { useRouter } from "next/navigation";
-import { error } from "console";
+
 
 interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means to only allow T if it's a valid form data object (like an object of strings, numbers, etc
     formType: "ADD_COURSE" | "ADD_SET";
@@ -44,16 +43,16 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
             }
         }
 
-        // const res = await api.courses.create(formData, userId);
+        const res = await api.courses.create(formData, userId);
 
-        // if (!res.success) {
-        //     console.log("Response not ok: ", res.error);
-        // }
-        // else {
-        //     const courseId = res!.data!._id!
-        //     console.log(courseId)
-        //     router.push(`courseDetails/${courseId}`)
-        // }
+        if (!res.success) {
+            console.log("Response not ok: ", res.error);
+        }
+        else {
+            const courseId = res!.data!._id!
+            console.log(courseId)
+            router.push(`courseDetails/${courseId}`)
+        }
         
     };
 
@@ -130,7 +129,7 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
                 
                 {form.formState.errors.materials && <p className="text-red-500 font-sora text-[18px]">{form.formState.errors.materials.message}</p>}
 
-                <button type="submit" disabled={form.formState.isSubmitting} className='flex justify-center cursor-pointer text-white font-sora  mt-[30px] font-semibold text-[24px] rounded-[10px] bg-[#6366F1] hover:bg-[#898BF4] w-[48%] py-[19px] '>
+                <button type="submit" disabled={form.formState.isSubmitting ? true : false} className='flex justify-center cursor-pointer text-white font-sora  mt-[30px] font-semibold text-[24px] rounded-[10px] bg-[#6366F1] hover:bg-[#898BF4] w-[48%] py-[19px] '>
                     {form.formState.isSubmitting ? "Submitting..." : buttonText }
                 </button>
             </form>

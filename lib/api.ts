@@ -19,6 +19,7 @@ export const api = {
         getAll: (userId: string) => fetchHandler(`${API_BASE_URL}/users/${userId}/courses`, {
             method: "GET"
         }),
+        getById: (courseId: string) => fetchHandler(`${API_BASE_URL}/courses/${courseId}`),
         create: (formData: FormData, userId: string) => fetchHandler(`${API_BASE_URL}/users/${userId}/courses`, {
             method: "POST",
             body: formData
@@ -42,5 +43,9 @@ export const api = {
                 providerAccountId
             })
         })
+    },
+    FlashcardSets: {
+        getSetAndFlashcards: (setId: string) => fetchHandler(`${API_BASE_URL}/sets/${setId}/flashcards`),
+
     }
 }
