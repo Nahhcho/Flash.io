@@ -11,10 +11,8 @@ function isError(error: unknown): error is Error {
 }
 
 export async function fetchHandler<T>(url: string, options: FetchOptions = {}): Promise<ActionResponse<T>> {
-    const { timeout = 5000, headers: customHeaders = {}, ...restOptions } = options;
+    const { headers: customHeaders = {}, ...restOptions } = options;
 
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
 
     const defaultHeaders: HeadersInit = {
         "Content-Type": "application/json",
@@ -30,19 +28,15 @@ export async function fetchHandler<T>(url: string, options: FetchOptions = {}): 
     const config: RequestInit = {
         ...restOptions,
         headers,
-        signal: controller.signal // The signal to support request cancellation 
     };
 
     try {
         const response = await fetch(url, config);
-        
-        clearTimeout(id);
 
         if (!response.ok) throw new RequestError(response.status, `HTTP error: ${response.status}`);
 
         return await response.json()
     } catch (err) {
-        clearTimeout(id);
         const error = isError(err) ? err: new Error("Unkown error");
 
         if (error.name === "AbortError") {

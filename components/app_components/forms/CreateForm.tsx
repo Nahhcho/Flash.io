@@ -6,9 +6,9 @@ import { DefaultValues, FieldValues, SubmitHandler, useForm } from "react-hook-f
 import { CreateCourseWithMaterialsSchema } from "@/lib/validations";
 import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
-import { api } from "@/lib/api";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { CreateCourse } from "@/lib/actions/course.action";
+import { ActionResponse } from "@/types/global";
 
 
 interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means to only allow T if it's a valid form data object (like an object of strings, numbers, etc
@@ -20,7 +20,6 @@ type FormSchema = z.infer<typeof CreateCourseWithMaterialsSchema>;
 
 const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFormProps<T>) => {
     const session = useSession();
-    const router = useRouter();
     const buttonText = formType === "ADD_COURSE" ? "Add Course" : "Add Set";
     const [isOpen, setIsOpen] = useState(false);
     const form = useForm<z.infer<typeof CreateCourseWithMaterialsSchema>>(
@@ -43,20 +42,9 @@ const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFo
             }
         }
 
-        const res = await api.courses.create(formData, userId);
-
-        if (!res.success) {
-            console.log("Response not ok: ", res.error);
-        }
-        else {
-            const courseId = res!.data!._id!
-            console.log(courseId)
-            router.push(`courseDetails/${courseId}`)
-        }
-        
+        await CreateCourse(formData, userId);
     };
 
-    
 
   return ( 
     <>

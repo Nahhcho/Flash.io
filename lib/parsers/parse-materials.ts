@@ -8,32 +8,41 @@ import { openai } from "@ai-sdk/openai";
 import { gptTextToFlashCards } from "./parse-gpt-text";
 import handlerError from "../handlers/error";
 import { APIErrorResponse } from "@/types/global";
+import { flashcardGenPrompt } from "@/constants/flashcardGenPrompt";
 
 export async function parseMaterials(
     files: File[],
     courseId: string,
     setType: "Exam" | "Regular" = "Regular",
-    session: ClientSession
+    session: ClientSession,
+    passedTitle?: string,
 ) {
     try {
         const mammoth = (await import("mammoth")).default;
         const path = await import("path");
         
-        const validatedSetData = FlashcardSetSchema.safeParse({
-            courseId,
-            type: setType
-        })
+        let validatedSetData;
+        if (passedTitle) {
+            validatedSetData = FlashcardSetSchema.safeParse({
+                title: passedTitle,
+                courseId,
+                type: setType
+            })
+        } else {
+            validatedSetData = FlashcardSetSchema.safeParse({
+                courseId,
+                type: setType
+            })
+        }
     
         if (!validatedSetData.success) {
             throw new ValidationError(validatedSetData.error.flatten().fieldErrors);
         }
-    
+        
         const [flashCardSet] = await FlashcardSet.create([{
             courseId,
             type: setType
         }], { session })
-    
-        
     
         let extractedText = ""
         const fileList = await Promise.all(
@@ -86,13 +95,11 @@ export async function parseMaterials(
             return material
         }))
     
-        console.log("Material List: ", materialList);
+        const prompt = flashcardGenPrompt(extractedText);
     
         const { text: gptText } = await generateText({
             model: openai("gpt-4o-mini"),
-            prompt: `From the following educational content, create concise flashcards in the format:\nQ: <question>\nA: <answer>\n\nOnly include accurate, factual questions. Avoid duplicate or overly similar questions.
-                     also create a relevant title in the form title: <title> for the entire flashcard set.
-                     30 characters for the title MAX.\n\nContent:\n${extractedText}`
+            prompt
         })
     
         const { terms, title } = await gptTextToFlashCards({
@@ -101,13 +108,14 @@ export async function parseMaterials(
             setId: flashCardSet.id
         });
     
-        flashCardSet.title = title;
+        flashCardSet.title = passedTitle ? passedTitle : title;
         flashCardSet.terms = terms;
         await flashCardSet.save({session});
+
+        return flashCardSet;
         
     } catch (error) {
-        console.log(error);
-        throw handlerError(error, 'api') as APIErrorResponse;
+        throw error;
     }
 
 }

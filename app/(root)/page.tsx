@@ -8,16 +8,17 @@ import UserAvatar from '@/components/app_components/UserAvatar'
 import { api } from '@/lib/api'
 import { ActionResponse } from '@/types/global'
 import { ICourseDoc } from '@/database/course.model'
+import { CreateCourseWithMaterialsSchema } from '@/lib/validations'
 
 
 const App = async () => {
     const session = await auth();
     console.log(session)
 
-    const res = await (api.courses.getAll(session!.user!.id!)) as ActionResponse<ICourseDoc[]>
-    console.log("RESULT:, ", res)
-    const courses = res.data
-    console.log("Courses", courses)
+    const res = await (api.courses.getAll(session!.user!.id!)) as ActionResponse<ICourseDoc[]>;
+    console.log("RESULT:, ", res);
+    const courses = res.data;
+    console.log("Courses", courses);
 
   return (
    
@@ -42,7 +43,7 @@ const App = async () => {
                     <CourseCard key={course._id.toString()} _id={course._id.toString()} title={course.title}/>
                 ))}
             </div>
-            <CreateForm formType="ADD_COURSE" defaultValues={{ title: "" }}/>
+            <CreateForm formType="ADD_COURSE" defaultValues={{ title: "", materials: new DataTransfer().files }} schema={CreateCourseWithMaterialsSchema}/>
         </>
   )
 }

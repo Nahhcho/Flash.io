@@ -1,21 +1,41 @@
 "use client";
 
-import { signOut } from 'next-auth/react';
+import { ICourseDoc } from '@/database/course.model';
+import { api } from '@/lib/api';
+import { ActionResponse } from '@/types/global';
+import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React from 'react'
-export const courses = [
-    "Biology",
-    "Calculus",
-    "Physics",
-    "Anatomy",
-    "Poly Sci"
-]
+import React, { useEffect, useState } from 'react'
 
 const Nav = () => {
-
+    const [courses, setCourses] = useState<ICourseDoc[] | null>(null);
     const pathname = usePathname();
+    const session = useSession();
+
+    useEffect(() => {
+        const fetch = async () => {
+            if (!session || !session.data) {
+                console.log("Error getting session");
+                return null
+            }
+
+            const userId  = session!.data!.user!.id!;
+            const res = (await api.courses.getAll(userId)) as ActionResponse;
+            
+            if (!res.success) {
+                console.log("Error while fetching courses", res);
+                return null;
+            }
+
+            const courses = res!.data! as ICourseDoc[]
+
+            setCourses(courses);
+        }
+
+        fetch();
+    }, [session])
 
 
   return (
@@ -42,11 +62,11 @@ const Nav = () => {
             <hr className='border-[#BCA7FB]' />
 
             {
-                courses.map((course, index) => (
+                courses && courses.map((course: ICourseDoc, index) => (
                     
                         <li key={index}>
-                            <Link href={`/courseDetails/${index+1}`}>
-                            <p className={`text-[22px] font-sora ${pathname === `/courseDetails/${index+1}` ? "text-[#3308B2]" : "text-[#7244FB]"} font-medium`}>{course}</p>
+                            <Link href={`/courseDetails/${course._id}`}>
+                            <p className={`text-[22px] font-sora ${pathname === `/courseDetails/${course._id}` ? "text-[#3308B2]" : "text-[#7244FB]"} font-medium`}>{course.title}</p>
                             </Link>
                         </li>
                 ))
