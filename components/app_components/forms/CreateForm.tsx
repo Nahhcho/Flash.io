@@ -8,7 +8,6 @@ import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
 import { useSession } from "next-auth/react";
 import { CreateCourse } from "@/lib/actions/course.action";
-import { ActionResponse } from "@/types/global";
 
 
 interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means to only allow T if it's a valid form data object (like an object of strings, numbers, etc
