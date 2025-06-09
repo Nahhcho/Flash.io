@@ -6,8 +6,6 @@ import Material from "@/database/material.model";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { gptTextToFlashCards } from "./parse-gpt-text";
-import handlerError from "../handlers/error";
-import { APIErrorResponse } from "@/types/global";
 import { flashcardGenPrompt } from "@/constants/flashcardGenPrompt";
 
 export async function parseMaterials(
@@ -18,6 +16,8 @@ export async function parseMaterials(
     passedTitle?: string,
 ) {
     try {
+        if (files.length < 1) return;
+
         const mammoth = (await import("mammoth")).default;
         const path = await import("path");
         
@@ -82,7 +82,7 @@ export async function parseMaterials(
             })
         )
     
-        const materialList = await Promise.all(fileList.map(async (file) => {
+        fileList.map(async (file) => {
             const validatedFile = MaterialSchemaBeforeCreate.safeParse(file);
             if (!validatedFile.success) throw new ValidationError(validatedFile.error.flatten().fieldErrors);
     
@@ -93,7 +93,7 @@ export async function parseMaterials(
                 courseId
             }], { session })
             return material
-        }))
+        })
     
         const prompt = flashcardGenPrompt(extractedText);
     

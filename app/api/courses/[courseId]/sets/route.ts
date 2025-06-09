@@ -5,7 +5,7 @@ import dbconnect from "@/lib/mongoose";
 import { APIErrorResponse } from "@/types/global";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { FlashcardSchema } from "@/lib/validations";
+import { FlashcardSetSchema } from "@/lib/validations";
 import { parseMaterials } from "@/lib/parsers/parse-materials";
 
 export async function GET(_: Request, { params }: { params: Promise<{ courseId: string }>}) {
@@ -25,6 +25,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ courseId: 
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ courseId: string }>}) {
+    console.log("CREATE SET API HIT")
     await dbconnect();
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -41,7 +42,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ courseI
         
         if (!files) throw new NotFoundError("files/materials");
 
-        const validatedData = FlashcardSchema.safeParse({
+        const validatedData = FlashcardSetSchema.safeParse({
             courseId,
             type: "Regular",
             title
@@ -56,7 +57,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ courseI
         return NextResponse.json({ success: true, data: set }, { status: 200 })
     } catch (error) {  
         await session.abortTransaction();
-
+        console.log("CREATE SET API ERROR: ", error)
         return handlerError(error, "api") as APIErrorResponse;
     }
 }

@@ -1,128 +1,132 @@
 "use client";
-import { z } from "zod"
+import { z, ZodType } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useState } from 'react'
-import { DefaultValues, FieldValues, SubmitHandler, useForm } from "react-hook-form"
-import { CreateCourseWithMaterialsSchema } from "@/lib/validations";
+import React from 'react'
+import { DefaultValues, Path, PathValue, SubmitHandler, useForm } from "react-hook-form"
 import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
-import { useSession } from "next-auth/react";
 import { CreateCourse } from "@/lib/actions/course.action";
+import { CreateSet } from "@/lib/actions/set.action";
 
-
-interface CreateFormProps<T extends FieldValues> { //T extend FieldValues means to only allow T if it's a valid form data object (like an object of strings, numbers, etc
-    formType: "ADD_COURSE" | "ADD_SET";
-    defaultValues: T;
+type SharedValues = {
+    title: string,
+    materials: FileList
 }
 
-type FormSchema = z.infer<typeof CreateCourseWithMaterialsSchema>;
+interface CreateFormProps<T> { 
+    formType: "ADD_COURSE" | "ADD_SET" | "ADD_EXAM_SET";
+    defaultValues?: T;
+    schema: ZodType<T>;
+    courseId?: string;
+}
 
-const CreateForm = <T extends FieldValues>({ formType,  defaultValues}: CreateFormProps<T>) => {
-    const session = useSession();
-    const buttonText = formType === "ADD_COURSE" ? "Add Course" : "Add Set";
-    const [isOpen, setIsOpen] = useState(false);
-    const form = useForm<z.infer<typeof CreateCourseWithMaterialsSchema>>(
+const CreateForm = <T extends SharedValues>({
+    formType,
+    defaultValues,
+    courseId,
+    schema
+}: CreateFormProps<T>) => {
+    const buttonText = formType === "ADD_COURSE" ? "Create Course" : "Add Set";
+    const optional = formType === "ADD_COURSE" ? "(optional)" : "";
+    const header = formType === "ADD_COURSE" ? "Course" : formType === "ADD_EXAM_SET" ? "Exam Set" : "Set";
+
+    const form = useForm<z.infer<typeof schema>>(
         {
-            resolver: zodResolver(CreateCourseWithMaterialsSchema),
-            defaultValues: defaultValues as DefaultValues<T> //So... what is DefaultValues<T>? It’s a utility type from React Hook Form that ensures: The shape of your defaultValues matches the fields in the form.
+            resolver: zodResolver(schema),
+            defaultValues: defaultValues as DefaultValues<T>
         }
     )
+    const watchedMaterials = form.watch("materials" as Path<T>);
 
-    const handleSubmit: SubmitHandler<FormSchema> = async (data: FormSchema) => {
-        const formData = new FormData();
-        const { title, materials } = data;
-        const userId = session!.data!.user!.id!
-        
-        formData.append("title", title);
+    const handleSubmit: SubmitHandler<T> = async (data: T) => {
+        switch (formType) {
+            case "ADD_COURSE":
+                await CreateCourse(data);
+                break;
+            
+            case "ADD_SET":
+                await CreateSet(data, courseId as string)
+                break;
 
-        if (materials) {
-            for (const file of materials) {
-                formData.append("materials", file);
-            }
+            case "ADD_EXAM_SET":
+                break;
         }
-
-        await CreateCourse(formData, userId);
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newFiles = e.target.files;
+        const currentFiles = form.getValues("materials" as Path<T>);
+
+        if (newFiles && newFiles.length > 0) {
+            const validNewFiles = Array.from(newFiles).filter((file) => {
+                const ext = file.name.split('.').pop()?.toLowerCase() as typeof ALLOWED_FILES[number];
+                return ext && (ALLOWED_FILES as readonly string[]).includes(ext);
+            })
+            
+            if (validNewFiles.length !== newFiles.length) {
+                form.setError("materials" as Path<T>, { message: "Only PDF, DOCX, PPTX, TXT, or CSV files are allowed." })
+            } else (form.trigger("materials" as Path<T>))
+
+            const mergedFiles = [...(currentFiles ? Array.from(currentFiles as FileList): []), ...Array.from(validNewFiles)];
+
+                const dataTransfer = new DataTransfer();
+            mergedFiles.forEach((file) => dataTransfer.items.add(file as File));
+
+            const combinedFileList = dataTransfer.files
+
+            form.setValue("materials" as Path<T>, combinedFileList as PathValue<T, Path<T>>);
+        }
+    }
+
+    const handleFileRemove = (file: File) => {
+        const currentFiles = form.getValues("materials" as Path<T>) as FileList;
+
+        if (!currentFiles) return null;
+
+        const arrWithRemovedFile = Array.from(currentFiles).filter((curFile) => curFile !== file);
+        const dataTransfer = new DataTransfer();
+
+        arrWithRemovedFile.forEach((file) => dataTransfer.items.add(file))
+
+        form.setValue("materials" as Path<T>, dataTransfer.files as PathValue<T, Path<T>>)
+    }
 
   return ( 
     <>
-        {
-            isOpen && 
-            <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 w-screen' onClick={() => {setIsOpen(false); form.reset()}}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} onClick={(e) => {e.stopPropagation()}} className='flex-col w-[791px] bg-[#1F2937] rounded-[10px] px-[100px] py-[35px]'>
-                <p className='font-sora text-white text-[28px] pb-[10px]'>Course Name</p>
-                <input {...form.register("title")} className='mb-[5px] h-[54px] bg-[#3D516D] rounded-[10px] w-full text-white font-sora px-[16px] focus:outline-none' placeholder='title'/>
-                {form.formState.errors.title && <p className="text-red-500 font-sora text-[18px]">{form.formState.errors.title.message}</p>}
-                <p className='pb-[10px] font-sora text-white text-[28px]'>Course Materials (optional)</p>
-                <label className="cursor-pointer">
-                <input 
-                    type="file"
-                    multiple
-                    hidden
-                    onChange={(e) => {
-                        const newFiles = e.target.files;
-                        const currentFiles = form.getValues("materials");
 
-                        if (newFiles && newFiles.length > 0) {
-                            const validNewFiles = Array.from(newFiles).filter((file) => {
-                                const ext = file.name.split('.').pop()?.toLowerCase() as typeof ALLOWED_FILES[number];
-                                return ext && (ALLOWED_FILES as readonly string[]).includes(ext);
-                            })
-                            
-                            if (validNewFiles.length !== newFiles.length) {
-                                form.setError("materials", { message: "Only PDF, DOCX, PPTX, TXT, or CSV files are allowed." })
-                            } else (form.trigger("materials"))
+            <form onSubmit={form.handleSubmit(handleSubmit)} >
 
-                            const mergedFiles = [...(currentFiles ? Array.from(currentFiles): []), ...Array.from(validNewFiles)];
+                <p className='font-sora text-white text-[28px] pb-[10px]'>{header} Name</p>
 
-                            //FileList is immutable so it can't be construct directly. So use DataTransfer to build the list
-                            const dataTransfer = new DataTransfer();
-                            mergedFiles.forEach((file) => dataTransfer.items.add(file));
+                <input {...form.register("title" as Path<T>)} className='mb-[5px] h-[54px] bg-[#3D516D] rounded-[10px] w-full text-white font-sora px-[16px] focus:outline-none' placeholder='title'/>
+                {form.formState.errors.title && <p className="text-red-500 font-sora text-[18px]">{form.formState.errors.title.message as string}</p>}
+                
+                <p className='py-[10px] font-sora text-white text-[28px]'>{header} Materials {optional}</p>
 
-                            const combinedFileList = dataTransfer.files
-
-                            form.setValue("materials", combinedFileList);
-
-                        }
-                    }}
-                />
-                <div className='bg-[#3D516D] flex justify-center items-center py-[28px] rounded-[10px]'>
+                <label className='bg-[#3D516D] flex justify-center items-center py-[28px] rounded-[10px] cursor-pointer'>
+                    <input type="file" multiple hidden onChange={handleFileChange} />
                     <div className='flex gap-[25px]'>
                     <Image src={'/file.png'} width={36} height={47} alt='file' />
                     <p className='text-white font-sora text-[28px]'>Drop all files</p>
                     </div>
-                </div>
                 </label>
+                
                 <ul className="pt-4 flex flex-wrap gap-3">
-                    {
-                        Array.from(form.watch("materials") || []).map((file, i) => (
-                            <li key={i} className="font-sora text-white text-[18px] cursor-pointer" onClick={() => {
-                                const currentFiles = form.getValues("materials");
-
-                                const arrWithRemovedFile = Array.from(currentFiles).filter((curFile) => curFile !== file);
-                                
-                                const dataTransfer = new DataTransfer();
-
-                                arrWithRemovedFile.forEach((file) => dataTransfer.items.add(file))
-
-                                form.setValue("materials", dataTransfer.files)
-                            }}>
-                                • {file.name}
-                            </li>
-                        ))
-                    }
+                {
+                watchedMaterials instanceof FileList && Array.from(watchedMaterials).map((file) => (
+                    <li key={file.name} onClick={() => handleFileRemove(file)} className="font-sora text-white text-[18px] cursor-pointer">
+                        • {file.name}
+                    </li>
+                    ))
+                }
                 </ul>
                 
-                {form.formState.errors.materials && <p className="text-red-500 font-sora text-[18px]">{form.formState.errors.materials.message}</p>}
+                {form.formState.errors.materials && <p className="text-red-500 font-sora text-[18px]">{form.formState.errors.materials.message as string}</p>}
 
                 <button type="submit" disabled={form.formState.isSubmitting ? true : false} className='flex justify-center cursor-pointer text-white font-sora  mt-[30px] font-semibold text-[24px] rounded-[10px] bg-[#6366F1] hover:bg-[#898BF4] w-[48%] py-[19px] '>
                     {form.formState.isSubmitting ? "Submitting..." : buttonText }
                 </button>
             </form>
-            </div>
-        }
-        <button onClick={() => setIsOpen(true)} className='col-start-4 col-end-7 flex w-[97%] justify-center mt-[40px] bg-[#6366F1] hover:bg-[#898BF4] py-[17px] rounded-[10px]'><span className='text-white text-[24px] font-sora font-semibold'>Add Course</span></button>
     </>
   )
 }

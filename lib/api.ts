@@ -46,6 +46,10 @@ export const api = {
     },
     FlashcardSets: {
         getSetAndFlashcards: (setId: string) => fetchHandler(`${API_BASE_URL}/sets/${setId}/flashcards`),
+        createSet: (formData: FormData, courseId: string) => fetchHandler(`${API_BASE_URL}/courses/${courseId}/sets`,{
+            method: "POST",
+            body: formData,
+        })
 
     }
 }

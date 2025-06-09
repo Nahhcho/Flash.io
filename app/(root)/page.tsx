@@ -2,13 +2,12 @@ import Calendar from '../../components/app_components/Calendar'
 import ProgressBar from '../../components/app_components/ProgressBar'
 import CourseCard from '../../components/app_components/cards/CourseCard'
 import Image from 'next/image'
-import CreateForm from '@/components/app_components/forms/CreateForm'
 import { auth } from '@/auth'
 import UserAvatar from '@/components/app_components/UserAvatar'
 import { api } from '@/lib/api'
 import { ActionResponse } from '@/types/global'
 import { ICourseDoc } from '@/database/course.model'
-import { CreateCourseWithMaterialsSchema } from '@/lib/validations'
+import AddModal from '@/components/app_components/forms/AddModal'
 
 
 const App = async () => {
@@ -38,12 +37,12 @@ const App = async () => {
                 
             </div>
             <header className='col-start-4 col-end-13 font-sora font-semibold text-white text-[32px] pt-[70px]'>All Courses</header>
-            <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] pt-[30px] col-start-4 col-end-13'>
-                {courses && courses.map((course: ICourseDoc) => (
-                    <CourseCard key={course._id.toString()} _id={course._id.toString()} title={course.title}/>
-                ))}
-            </div>
-            <CreateForm formType="ADD_COURSE" defaultValues={{ title: "", materials: new DataTransfer().files }} schema={CreateCourseWithMaterialsSchema}/>
+                <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] pt-[30px] col-start-4 col-end-13'>
+                    {courses && courses.map((course: ICourseDoc) => (
+                        <CourseCard key={course._id.toString()} _id={course._id.toString()} title={course.title}/>
+                    ))}
+                </div>
+            <AddModal formType={"ADD_COURSE"} />
         </>
   )
 }

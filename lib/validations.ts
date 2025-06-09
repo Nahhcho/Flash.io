@@ -67,11 +67,63 @@ export const CreateCourseWithMaterialsSchema = z.object({
       return allValidTypes && fileArray.length <= 5;
     }, {
       message: "Only PDF, DOCX, PPTX, TXT, or CSV files are allowed (max 5 files)."
-    })
-    .optional(),
+    }),
 
   url: z.string().url({ message: "Invalid URL" }).optional(),
 });
+
+export const CreateSetHookForm = z.object({
+    title: z
+    .string()
+    .min(1, { message: "Title is required" })
+    .max(50, { message: "Title must be at most 50 characters" }),
+
+    materials: z
+      .custom<FileList>((files): files is FileList => {
+        if (!files) return false;
+
+        if (!(files instanceof FileList)) return false;
+
+        const fileArray = Array.from(files);
+
+        const allValidTypes = fileArray.every((file) => {
+          const ext = file.name.split(".").pop()?.toLowerCase();
+          return ext && ALLOWED_FILES.includes(ext as AllowedFileExtension);
+        });
+
+        return allValidTypes && fileArray.length <= 5;
+      }, {
+        message: "You must upload at least 1 and at most 5 valid files (PDF, DOCX, PPTX, TXT, or CSV)."
+      }),
+    url: z.string().url({ message: "Invalid URL" }).optional(),
+})
+
+export const CreateExamSetHookForm = z.object({
+    title: z
+    .string()
+    .min(1, { message: "Title is required" })
+    .max(50, { message: "Title must be at most 50 characters" }),
+
+    materials: z
+      .custom<FileList>((files): files is FileList => {
+        if (!files) return false;
+
+        if (!(files instanceof FileList)) return false;
+
+        const fileArray = Array.from(files);
+
+        const allValidTypes = fileArray.every((file) => {
+          const ext = file.name.split(".").pop()?.toLowerCase();
+          return ext && ALLOWED_FILES.includes(ext as AllowedFileExtension);
+        });
+
+        return allValidTypes && fileArray.length <= 5;
+      }, {
+        message: "You must upload at least 1 and at most 5 valid files (PDF, DOCX, PPTX, TXT, or CSV)."
+      }),
+    url: z.string().url({ message: "Invalid URL" }).optional(),
+    additionalSets: z.string().min(1, { message: "No materials found with set"}).optional()
+})
 
 
 export const UserSchema = z.object({

@@ -1,11 +1,10 @@
 import React from 'react'
-import AddSetModal from '../../../../components/app_components/forms/AddSetModal'
-import AddExamModal from '../../../../components/app_components/forms/AddExamModal'
 import { api } from '@/lib/api'
 import SetCard from '@/components/app_components/cards/SetCard'
 import { IFlashcardSetDoc } from '@/database/flashcard-set.model'
 import { error } from 'console'
 import { ICourseDoc } from '@/database/course.model'
+import AddModal from '@/components/app_components/forms/AddModal'
 
 
 
@@ -25,25 +24,28 @@ const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }>}
   
 
   return (
-    <div className='col-start-4 col-end-13 min-h-screen'>
-        <header className=' text-white text-[32px] font-sora font-semibold pb-[25px]'>{course?.title}</header>
-    
-        <hr className=' w-full border-[#2E3D52]  mb-[70px]'/>
+    <>
+      <div className='col-start-4 col-end-13'>
+          <header className=' text-white text-[32px] font-sora font-semibold pb-[25px]'>{course?.title}</header>
+      
+          <hr className=' w-full border-[#2E3D52]  mb-[70px]'/>
 
-        <p className='font-sora text-white text-[32px] pb-[25px]'>Upcoming Exam Sets</p>
-        
-        <AddExamModal />
+          <p className='font-sora text-white text-[32px] pb-[25px]'>Upcoming Exam Sets</p>
+      </div>
+          
+      <AddModal formType={"ADD_EXAM_SET"} />
 
-        <p className='font-sora text-white text-[32px] pb-[30px] mt-[100px]'>All Biology 101 Sets</p>
+      <div className='col-start-4 col-end-13'>
+          <p className='font-sora text-white text-[32px] pb-[30px] mt-[100px]'>All Biology 101 Sets</p>
 
-            <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] pb-[30px] col-start-4 col-end-13'>
-                {sets.map((set: IFlashcardSetDoc) => (
-                    <SetCard key={set.title} set={set}/>
-                ))}
-            </div>
-        
-        <AddSetModal />
-    </div>
+              <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] col-start-4 col-end-13'>
+                  {sets.map((set: IFlashcardSetDoc) => (
+                      <SetCard key={set.title} set={set}/>
+                  ))}
+              </div>
+      </div>
+      <AddModal formType={"ADD_SET"} courseId={courseId}/>
+    </>
   )
 }
 

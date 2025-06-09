@@ -74,8 +74,6 @@ export async function POST(req: Request, {params}: {params: Promise<{userId: str
         const [course] = await Course.create([{title, userId}], {session});
 
         if (files) {
-            console.log("made it here");
-            console.log("not here")
             await parseMaterials(
                 files,
                 course.id,
