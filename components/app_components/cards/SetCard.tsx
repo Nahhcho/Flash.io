@@ -14,7 +14,7 @@ const SetCard = ( { set } : Props) => {
         {
             //quiz.completed && <Image src={'/checked.png'} width={22} height={22} alt='checked' className='absolute right-0 -translate-y-3 translate-x-2'/>
         }
-        <header className='flex justify-center pt-[25px] font-sora font-semibold text-[20px] text-white'>{set.title}</header>
+        <header className='flex px-[30px] justify-center pt-[25px] font-sora font-semibold text-[20px] text-white'>{set.title}</header>
         <div className='flex justify-center p-[50px]'>
             <div className='bg-[#557199] w-fit px-3 py-2 rounded-[30px]'><p className='text-white text-[14px] font-sora'>{set.terms} terms</p></div> 
         </div>

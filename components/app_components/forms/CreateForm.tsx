@@ -7,6 +7,7 @@ import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
 import { CreateCourse } from "@/lib/actions/course.action";
 import { CreateSet } from "@/lib/actions/set.action";
+import Loading from "@/app/(root)/courseDetails/[courseId]/loading";
 
 type SharedValues = {
     title: string,
