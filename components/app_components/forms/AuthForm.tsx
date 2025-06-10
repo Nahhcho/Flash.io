@@ -34,7 +34,7 @@ const AuthForm = <T extends FieldValues>({ type, schema, defaultValues }: AuthFo
                 <header className='font-semibold text-[32px]'>Join NeuroNote</header>
                 <p className=''>Start studying smarter today</p>
             </div>
-            <Image src={'/favicon.png'} height={101} width={101} alt='favicon'/>
+            <Image src={'/favicon.png'} height={80} width={80} quality={100} alt='favicon'/>
         </div>
     <form className='flex flex-col gap-8' onSubmit={form.handleSubmit(handleSubmit)}>
         <div className='flex flex-col gap-4'>
@@ -61,7 +61,7 @@ const AuthForm = <T extends FieldValues>({ type, schema, defaultValues }: AuthFo
     <button onClick={async () => {
         signIn("google", { callbackUrl: "/" })
     }} className='flex gap-2 bg-white rounded-[8px] h-[45px] items-center justify-center cursor-pointer mt-4'>
-        <Image src={"/google.png"} width={25} height={20} alt='google_img'/>
+        <Image src={"/google.png"} width={25} height={20} quality={100} alt='google_img'/>
         <p className='font-medium'>Login with Google</p>
     </button>
     </div>

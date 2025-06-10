@@ -2,6 +2,7 @@
  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "tailwindcss-motion";
 
 @custom-variant dark (&:is(.dark *));
 @plugin 'tailwind-scrollbar';

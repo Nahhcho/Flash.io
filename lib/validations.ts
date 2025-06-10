@@ -184,3 +184,13 @@ export const FlashcardSchema = z.object({
   question: z.string().min(1, { message: "Question required"}),
   answer: z.string().min(1, { message: "Answer required"})
 });
+
+export const EditFlashcardsSchema = z.object({
+  flashcards: z.array(
+    z.object({
+      _id: z.string(),
+      question: z.string().min(1, { message: "Term required "}),
+      answer: z.string().min(1, { message: "Definition required"}),
+    })
+  )
+})

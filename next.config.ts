@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
         port: ""
       }
     ]
-  }
+  },
+  serverExternalPackages: ['pdf-parse']
 };
 
 export default nextConfig;

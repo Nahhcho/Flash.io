@@ -7,9 +7,9 @@ import Image from 'next/image';
 
 const Nav = () => {
   return (
-    <div className='flex px-[120px] 2xl:px-[200px] justify-between items-center pt-[36px]'>
-      <div className='flex items-center'>
-        <Image src={"/favicon.png"} height={80} width={80} alt='icon'/>
+    <div className='flex px-[120px] 2xl:px-[200px] justify-between items-center pt-[36px] bg-white'>
+      <div className='flex items-center justify-center gap-2'>
+        <Image src={"/favicon.png"} height={40} width={40} quality={100} alt='icon'/>
         <p className='font-semibold text-[32px] flex'>Nuero <p className='text-[#6F00FF]'>Note</p></p>
       </div>
 

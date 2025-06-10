@@ -7,7 +7,7 @@ import React from 'react'
 const Hero = () => {
   return (
     
-    <div className='grid grid-cols-12 mx-[120px] 2xl:mx-[200px] gap-[20px] relative mt-[61px]'>
+    <div className='grid grid-cols-12 mx-[120px] 2xl:mx-[200px] gap-[20px] relative mt-[61px] bg-white'>
       
       <div className='flex flex-col col-start-1 col-end-7 pt-[70px] lg:pt-[90px] xl:pt-[180px]'>
 

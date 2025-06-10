@@ -115,6 +115,8 @@ export async function parseMaterials(
         return flashCardSet;
         
     } catch (error) {
+        console.log("PDF ERROR");
+        console.log(error)
         throw error;
     }
 

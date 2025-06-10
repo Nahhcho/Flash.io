@@ -41,8 +41,8 @@ export async function gptTextToFlashCards({
                             answer: curA,
                             setId,
                         }], {session});
+                        terms++;
                     }
-                    terms++;
                     curQ = line.slice(2).trim();
                     curA = ""
                 } else if (line.startsWith("A:")) {
