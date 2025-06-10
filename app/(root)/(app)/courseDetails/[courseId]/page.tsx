@@ -6,6 +6,7 @@ import { error } from 'console'
 import { ICourseDoc } from '@/database/course.model'
 import AddModal from '@/components/app_components/modals/AddModal'
 import Image from 'next/image'
+import DeleteModal from '@/components/app_components/modals/DeleteModal'
 
 
 
@@ -29,7 +30,7 @@ const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }>}
       <div className='col-start-4 col-end-13'>
         <div className='flex justify-between items-start'>
           <header className=' text-white text-[32px] font-sora font-semibold pb-[20px]'>{course?.title}</header>
-          <Image className='cursor-pointer' src={"/settings.png"} width={50} height={50} quality={100} alt='settings' />
+          <DeleteModal courseId={courseId}/>
         </div>
       
           <hr className=' w-full border-[#2E3D52]  mb-[70px]'/>
