@@ -1,5 +1,4 @@
-import { ALLOWED_FILES, AllowedFileTypes } from "@/constants/allowedFileTypes";
-import { model, models, Schema, Types } from "mongoose";
+import { HydratedDocument, model, models, Schema, Types } from "mongoose";
 
 interface IMaterial {
     name: string;
@@ -11,6 +10,7 @@ interface IMaterial {
     createdAt?: Date;
 }
 
+export type IMaterialDoc = HydratedDocument<IMaterial>;
 const MaterialSchema = new Schema<IMaterial>(
     {
         name: { type: String, required: true },

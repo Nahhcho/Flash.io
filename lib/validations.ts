@@ -66,7 +66,7 @@ export const CreateCourseWithMaterialsSchema = z.object({
 
       return allValidTypes && fileArray.length <= 5;
     }, {
-      message: "Only PDF, DOCX, PPTX, TXT, or CSV files are allowed (max 5 files)."
+      message: "At most 5 valid files (PDF, DOCX, PPTX, TXT, or CSV)"
     }),
 
   url: z.string().url({ message: "Invalid URL" }).optional(),
@@ -91,7 +91,7 @@ export const CreateSetHookForm = z.object({
           return ext && ALLOWED_FILES.includes(ext as AllowedFileExtension);
         });
 
-        return allValidTypes && fileArray.length <= 5;
+        return allValidTypes && fileArray.length <= 5 && fileArray.length > 0;
       }, {
         message: "You must upload at least 1 and at most 5 valid files (PDF, DOCX, PPTX, TXT, or CSV)."
       }),
@@ -117,12 +117,19 @@ export const CreateExamSetHookForm = z.object({
           return ext && ALLOWED_FILES.includes(ext as AllowedFileExtension);
         });
 
-        return allValidTypes && fileArray.length <= 5;
+        return allValidTypes && fileArray.length <= 5 && fileArray.length > 0;
       }, {
         message: "You must upload at least 1 and at most 5 valid files (PDF, DOCX, PPTX, TXT, or CSV)."
       }),
     url: z.string().url({ message: "Invalid URL" }).optional(),
-    additionalSets: z.string().min(1, { message: "No materials found with set"}).optional()
+    additionalSets: z.string().min(1, { message: "No materials found with set"}).optional(),
+    examDate: z
+      .preprocess(
+        (val) => (val ? new Date(val as string) : undefined),
+        z.date().refine((date) => date > new Date(), {
+          message: "Future exam date must be provided",
+        })
+      )
 })
 
 

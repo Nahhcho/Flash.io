@@ -5,7 +5,6 @@ import { IFlashcardSetDoc } from '@/database/flashcard-set.model'
 import { error } from 'console'
 import { ICourseDoc } from '@/database/course.model'
 import AddModal from '@/components/app_components/modals/AddModal'
-import Image from 'next/image'
 import DeleteModal from '@/components/app_components/modals/DeleteModal'
 
 
@@ -36,16 +35,22 @@ const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }>}
           <hr className=' w-full border-[#2E3D52]  mb-[70px]'/>
 
           <p className='font-sora text-white text-[32px] pb-[25px]'>Upcoming Exam Sets</p>
+
+          <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] col-start-4 col-end-13'>
+              {sets.map((set: IFlashcardSetDoc) => (
+                  set.type === "Exam" && !set.completed && <SetCard key={set.title} set={set}/>
+              ))}
+          </div>
       </div>
           
-      <AddModal formType={"ADD_EXAM_SET"} />
+      <AddModal formType={"ADD_EXAM_SET"} courseId={courseId}/>
 
       <div className='col-start-4 col-end-13'>
-          <p className='font-sora text-white text-[32px] pb-[30px] mt-[100px]'>All Biology 101 Sets</p>
+          <p className='font-sora text-white text-[32px] pb-[30px] mt-[100px]'>All Sets</p>
 
               <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] col-start-4 col-end-13'>
                   {sets.map((set: IFlashcardSetDoc) => (
-                      <SetCard key={set.title} set={set}/>
+                      set.type === "Regular" && <SetCard key={set.title} set={set}/>
                   ))}
               </div>
       </div>

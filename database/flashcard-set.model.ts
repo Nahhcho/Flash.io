@@ -5,6 +5,9 @@ export interface IFlashcardSet {
     courseId: Types.ObjectId;
     type: "Exam" | "Regular" ;
     terms?: number;
+    examDate?: Date;
+    currentSetCompletionDate?: Date;
+    completed?: boolean
 }
 
 export type IFlashcardSetDoc = HydratedDocument<IFlashcardSet>;
@@ -17,7 +20,10 @@ const FlashcardSetSchema = new Schema(
             enum: ["Exam", "Regular"],
             required: true
         },
-        terms: { type: Number }
+        terms: { type: Number },
+        examDate: { type: Date },
+        currentSetCompletionDate: { type: Date },
+        completed: { type: Boolean, default: false }
     }
 )
 

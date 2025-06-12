@@ -8,10 +8,13 @@ import { IFlashcardDoc } from '@/database/flashcard.model';
 import { api } from '@/lib/api';
 import { getRandomUniqueNumbers } from '@/lib/utils/random';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import Loading from '../../loading';
 import { cn } from '@/lib/utils';
+import ResultsContainer from '@/components/app_components/containers/ResultsContainer';
+import { formatTime } from '@/lib/utils/formatTime';
+import { iterateExamSet } from '@/lib/actions/set.action';
 
 const answerLetters = ['A) ', 'B) ', 'C) ', 'D) ']
 
@@ -26,7 +29,8 @@ const CourseQuiz = () => {
     const [clickedIndex, setClickedIndex] = useState<number | null>(null);
     const [wrongCount, setWrongCount] = useState(0);
     const [rightCount, setRightCount] = useState(0);
-    const router = useRouter();
+    const [secondsElapsed, setSecondsElapsed] = useState(0);
+    const [weakIds, setWeakIds] = useState<string[]>([])
     const params = useParams();
     const setId = params.setId as string;
 
@@ -58,15 +62,19 @@ const CourseQuiz = () => {
 
         setAnswers(answers);
         setLoading(false);
-
+        console.log(flashcards)
     }, [flashcards, index])
 
-    if (loading) return <Loading />;
+    useEffect(() => {
+        if (!loading && index === flashcards.length && set && set.type === "Exam" && set.completed == false) {
+            iterateExamSet(set._id.toString(), weakIds);
+        }
+    }, [loading, index, set, weakIds, flashcards.length]);
 
-    if (!loading && index === flashcards.length) {
-        router.push("/");
-        //router.push(`/quiz/${setId}/results`);
-        return null; 
+    if (loading && answers.length !== 4) return <Loading />;
+
+    if (!loading && index === flashcards.length && set) {
+        return <ResultsContainer percentage={Math.floor((100/flashcards.length)*(rightCount))} set={set} rightAnswers={rightCount} wrongAnswers={wrongCount} totalTime={formatTime(secondsElapsed)}/>; 
     }
     
     return (
@@ -74,10 +82,10 @@ const CourseQuiz = () => {
         {//<audio src="/audio/locked-in.mp3" autoPlay loop />
         }
         <div className='col-start-1 col-end-3'>
-            <Timer />
+            <Timer secondsElapsed={secondsElapsed} setSecondsElapsed={setSecondsElapsed}/>
         </div>
-        <header className='flex items-center justify-center col-start-3 col-end-11 text-white text-[32px] font-sora font-semibold pb-[10px]'>{set?.title}</header>
-        <div onClick={() => {setIsOpen(true)}} className='col-start-12 col-end-13 flex items-center justify-center gap-2 rounded-[10px] border-2 border-[#A78BFA] cursor-pointer hover:border-[#b8a3f8] hover:font-semibold'>
+        <header className='flex items-center justify-center col-start-3 col-end-11 text-white text-[32px] font-sora font-semibold pb-[10px]'>{set?.title} Quiz</header>
+        <div onClick={() => {setIsOpen(true)}} className='col-start-12 col-end-13 flex items-center justify-center gap-2 rounded-[10px] border-2 border-[#6366F1] cursor-pointer hover:border-[#898BF4] hover:font-semibold'>
             <p className='font-sora text-white text-[24px]'>Quit</p> 
         </div>
         {
@@ -129,6 +137,7 @@ const CourseQuiz = () => {
                             setRightCount((prev) => prev + 1);
                         } else {
                             setWrongCount((prev) => prev + 1);
+                            setWeakIds(prev => [...prev, flashcards[index]._id.toString()])
                         }
                         
                         setAnimate(false);

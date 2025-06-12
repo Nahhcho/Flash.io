@@ -18,21 +18,22 @@ import { revalidatePath } from "next/cache";
 export async function CreateCourse<T extends {title: string, materials?: FileList }>(data: T) {
     const formData = new FormData();
     const { title, materials } = data;
-
+    
     const session = await auth();
     
     if (!session) redirect(ROUTES.SIGN_IN);
-
+    
     const userId = session.user!.id!;
-
+    
     formData.append("title", title);
-
+    
     if (materials) {
         Array.from(materials).forEach((file) => {
             formData.append("materials", file);
         });
     }
-
+    
+    console.log("Form Data before submit: ", formData)
     const response = (await api.courses.create(formData, userId)) as ActionResponse<ICourseDoc>;
 
     if (!response.success || !response.data) return response as ErrorResponse;
@@ -40,6 +41,7 @@ export async function CreateCourse<T extends {title: string, materials?: FileLis
     const courseId = response.data._id;
     
     console.log("redirect now: ", response.success)
+    revalidatePath("/")
     redirect(`/courseDetails/${courseId}`);
 }
 
@@ -69,6 +71,8 @@ export async function deleteCourse(courseId: string) {
         return { status: 204, success: true, data: null }
     } catch (error) {
         await session.abortTransaction();
+        console.log("Error before handler", error)
+        console.log("Error after handler", handlerError(error))
         return handlerError(error) as ErrorResponse;
     } finally {
         session.endSession();

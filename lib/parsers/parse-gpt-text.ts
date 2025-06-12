@@ -2,6 +2,7 @@ import { ClientSession, Types } from "mongoose";
 import { FlashcardSchema } from "../validations";
 import { ValidationError } from "../http-errors";
 import Flashcard from "@/database/flashcard.model";
+import handlerError from "../handlers/error";
 
 export async function gptTextToFlashCards({
     gptText,
@@ -10,7 +11,7 @@ export async function gptTextToFlashCards({
 }: {
     gptText: string, 
     session: ClientSession, 
-    setId: Types.ObjectId}): Promise<{terms: number, title: string}> {
+    setId: Types.ObjectId}): Promise<{terms: number, title: string, currentSetCompletionDate: Date | undefined}> {
 
         try {
             const lines = gptText
@@ -21,7 +22,8 @@ export async function gptTextToFlashCards({
             let title = "";
             let curQ = "";
             let curA = "";
-            let terms = 0
+            let terms = 0;
+            let currentSetCompletionDate: Date | undefined;
     
             for (const line of lines) {
                 if (line.toLowerCase().startsWith("title:")) {
@@ -47,6 +49,8 @@ export async function gptTextToFlashCards({
                     curA = ""
                 } else if (line.startsWith("A:")) {
                     curA = line.slice(2).trim();
+                } else if (line.toLowerCase().startsWith("datetocomplete")) {
+                    currentSetCompletionDate = new Date(line.slice(15).trim());
                 }
             }
     
@@ -55,9 +59,10 @@ export async function gptTextToFlashCards({
                 terms++;
             }
     
-            return { title, terms }
+            return { title, terms, currentSetCompletionDate }
             
         } catch (error) {
+            console.log("Error while parsing gpt response: ", handlerError(error, "api"))
             throw error
         }
 }

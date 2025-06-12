@@ -1,16 +1,13 @@
+import { formatTime } from '@/lib/utils/formatTime';
 import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
-const formatTime = (totalSeconds: number) => {
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-  return `${minutes}:${seconds}`;
-};
+interface Props {
+  secondsElapsed: number;
+  setSecondsElapsed: React.Dispatch<React.SetStateAction<number>>;
+}
 
-const Timer = () => {
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
+const Timer = ({ secondsElapsed, setSecondsElapsed }: Props) => {
 
   useEffect(() => {
     const interval = setInterval(() => {

@@ -87,7 +87,8 @@ export async function POST(req: Request, {params}: {params: Promise<{userId: str
         return NextResponse.json({ success: true, data: course }, { status: 201 });
     } catch (error) {
         await session.abortTransaction();
-
+        console.log("Course post error: ", error);
+        console.log("Handled error: ", handlerError(error));
         return handlerError(error, 'api') as APIErrorResponse;
     }
 }

@@ -14,9 +14,11 @@ export async function parseMaterials(
     setType: "Exam" | "Regular" = "Regular",
     session: ClientSession,
     passedTitle?: string,
+    examDate?: Date
 ) {
     try {
         if (files.length < 1) return;
+        console.log("Parse Materials Hit")
 
         const mammoth = (await import("mammoth")).default;
         const path = await import("path");
@@ -41,7 +43,9 @@ export async function parseMaterials(
         
         const [flashCardSet] = await FlashcardSet.create([{
             courseId,
-            type: setType
+            type: setType,
+            examDate,
+            currentSetCompletionDate: setType === "Exam" ? new Date() : undefined
         }], { session })
     
         let extractedText = ""
@@ -81,6 +85,8 @@ export async function parseMaterials(
                 })
             })
         )
+
+        console.log("Text extraction finished")
     
         fileList.map(async (file) => {
             const validatedFile = MaterialSchemaBeforeCreate.safeParse(file);
@@ -97,11 +103,13 @@ export async function parseMaterials(
     
         const prompt = flashcardGenPrompt(extractedText);
     
+        console.log("gpt reached, Prompt: ", prompt);
         const { text: gptText } = await generateText({
             model: openai("gpt-4o-mini"),
             prompt
         })
-    
+
+        console.log("gpt finished");
         const { terms, title } = await gptTextToFlashCards({
             gptText,
             session,
@@ -112,11 +120,11 @@ export async function parseMaterials(
         flashCardSet.terms = terms;
         await flashCardSet.save({session});
 
+        console.log("flashcards creation finished")
         return flashCardSet;
         
     } catch (error) {
-        console.log("PDF ERROR");
-        console.log(error)
+        console.log("Error while parsing materials: ", error);
         throw error;
     }
 
