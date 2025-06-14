@@ -1,48 +1,75 @@
 "use server";
 
-import { ActionResponse, ErrorResponse } from "@/types/global";
-import { api } from "../api";
-import Course, { ICourseDoc } from "@/database/course.model";
-import { redirect } from "next/navigation";
+import { ErrorResponse, SuccessResponse } from "@/types/global";
+import Course from "@/database/course.model";
 import { auth } from "@/auth";
-import { ROUTES } from "@/constants/routes";
 import handlerError from "../handlers/error";
 import dbconnect from "../mongoose";
-import { CourseSchema } from "../validations";
+import { CourseSchema, CreateCourseHookForm } from "../validations";
 import { NotFoundError, ValidationError } from "../http-errors";
 import mongoose from "mongoose";
 import FlashcardSet from "@/database/flashcard-set.model";
 import Flashcard from "@/database/flashcard.model";
 import { revalidatePath } from "next/cache";
+import { parseMaterials } from "../parsers/parse-materials";
+import { redirect } from "next/navigation";
 
-export async function CreateCourse<T extends {title: string, materials?: FileList }>(data: T) {
-    const formData = new FormData();
-    const { title, materials } = data;
-    
-    const session = await auth();
-    
-    if (!session) redirect(ROUTES.SIGN_IN);
-    
-    const userId = session.user!.id!;
-    
-    formData.append("title", title);
-    
-    if (materials) {
-        Array.from(materials).forEach((file) => {
-            formData.append("materials", file);
+interface CreateCourseProps {
+    title: string,
+    materials: FileList;
+}
+
+export async function CreateCourse({
+    title,
+    materials
+}: CreateCourseProps) {
+    await dbconnect();
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    let courseId;
+
+    try {
+        const validatedData = CreateCourseHookForm.partial().safeParse({
+            title,
         });
-    }
-    
-    console.log("Form Data before submit: ", formData)
-    const response = (await api.courses.create(formData, userId)) as ActionResponse<ICourseDoc>;
 
-    if (!response.success || !response.data) return response as ErrorResponse;
-    
-    const courseId = response.data._id;
-    
-    console.log("redirect now: ", response.success)
-    revalidatePath("/")
-    redirect(`/courseDetails/${courseId}`);
+        if (!validatedData.success) throw new ValidationError(validatedData.error.flatten().fieldErrors);
+
+        const userSession = await auth();
+        if (!userSession || !userSession.user) throw new NotFoundError("User session");
+
+        const userId = userSession.user.id!;
+
+        const [course] = await Course.create([{
+            title,
+            userId: userId.toString()
+        }], { session });
+
+        if (materials.length > 0) {
+            await parseMaterials({
+                files: [...materials],
+                courseId: course._id.toString(),
+                setType: "Regular",
+                session,
+            });
+        }
+
+        await session.commitTransaction();
+
+        revalidatePath("/");
+        courseId = course._id.toString();
+        
+    } catch (error) {
+        await session.abortTransaction();
+        console.log(
+            "Error within create course server action: ",
+            error
+        );
+        return handlerError(error) as ErrorResponse;
+    } finally {
+        await session.endSession();
+    }
+    redirect(`/courseDetails/${courseId.toString()}`);
 }
 
 export async function deleteCourse(courseId: string) {
@@ -68,7 +95,6 @@ export async function deleteCourse(courseId: string) {
 
         revalidatePath("/");
 
-        return { status: 204, success: true, data: null }
     } catch (error) {
         await session.abortTransaction();
         console.log("Error before handler", error)
@@ -77,7 +103,7 @@ export async function deleteCourse(courseId: string) {
     } finally {
         session.endSession();
     }
-
+    redirect("/")
 }
 
 export async function updateCourseName(title: string, courseId: string) {

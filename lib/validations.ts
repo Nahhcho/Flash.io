@@ -45,7 +45,7 @@ export const SignInSchema = z.object({
 // Get the union type from the array (e.g., "pdf" | "docx" | ...)
 type AllowedFileExtension = typeof ALLOWED_FILES[number];
 
-export const CreateCourseWithMaterialsSchema = z.object({
+export const CreateCourseHookForm = z.object({
   title: z
     .string()
     .min(1, { message: "Title is required" })
@@ -67,7 +67,7 @@ export const CreateCourseWithMaterialsSchema = z.object({
       return allValidTypes && fileArray.length <= 5;
     }, {
       message: "At most 5 valid files (PDF, DOCX, PPTX, TXT, or CSV)"
-    }),
+    }).optional(),
 
   url: z.string().url({ message: "Invalid URL" }).optional(),
 });
@@ -131,7 +131,6 @@ export const CreateExamSetHookForm = z.object({
         })
       )
 })
-
 
 export const UserSchema = z.object({
     name: z.string().min(1, { message: "Name is required"}),
@@ -200,4 +199,18 @@ export const EditFlashcardsSchema = z.object({
       answer: z.string().min(1, { message: "Definition required"}),
     })
   )
+})
+
+export const StudyPlanSchema = z.object({
+  title: z.string().min(1, { message: "Title is required "}).max(50, { message: "Title cannot excced 50 characters" }),
+  courseId: z.string().min(1, { message: "courseId is required "}),
+  examDate: z
+  .preprocess(
+    (val) => (val ? new Date(val as string) : undefined),
+    z.date().refine((date) => date > new Date(), {
+      message: "Future exam date must be provided",
+    })
+  ),
+  materials: z.any()
+  
 })

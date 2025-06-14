@@ -19,7 +19,7 @@ const MaterialSchema = new Schema<IMaterial>(
         courseId: { type: Schema.Types.ObjectId, ref: "Courses" , required: true},
         setId: { type: Schema.Types.ObjectId, ref: "FlashcardSet", required: true},
         parsedText: { type: String, required: true },
-    },
+    },   
     {
         timestamps: true
     }

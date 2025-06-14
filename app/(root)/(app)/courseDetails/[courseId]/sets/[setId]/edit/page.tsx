@@ -1,4 +1,5 @@
 import EditSetForm from '@/components/app_components/forms/EditSetForm';
+import DeleteModal from '@/components/app_components/modals/DeleteModal';
 import { api } from '@/lib/api'
 import React from 'react'
 
@@ -13,8 +14,11 @@ const EditSet = async ({ params }: { params: { courseId: string, setId: string }
 
   return (
     <div className='col-start-4 col-end-13'>
-    
-        <header className=' text-white text-[32px] font-sora font-semibold pb-[20px]'>{set.title}</header>
+
+        <div className='flex items-start justify-between'>
+          <header className=' text-white text-[32px] font-sora font-semibold pb-[20px]'>{set.title}</header>
+          <DeleteModal setId={setId} />
+        </div>
 
         <hr className=' w-full border-[#2E3D52]  mb-[70px]'/>
 

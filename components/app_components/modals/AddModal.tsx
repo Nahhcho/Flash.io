@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import CreateForm from '../forms/CreateForm';
-import { CreateCourseWithMaterialsSchema, CreateExamSetHookForm, CreateSetHookForm } from '@/lib/validations';
+import { CreateCourseHookForm, CreateExamSetHookForm, CreateSetHookForm } from '@/lib/validations';
 import { ZodType } from 'zod';
 
 interface ModalProps {
@@ -14,15 +14,17 @@ const AddModal = ({ formType, courseId = "" }: ModalProps) => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [buttonText, setButtonText] = useState("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [schema, setSchema] = useState<ZodType<any, any, any> | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [defaultValues, setDefaultValues] = useState<any | null>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
       switch (formType) {
         case "ADD_COURSE":
-          setButtonText("Create Course");
-          setSchema(CreateCourseWithMaterialsSchema);
+          setButtonText("Add Course");
+          setSchema(CreateCourseHookForm);
           setDefaultValues({
               title: "",
               materials: new DataTransfer().files, 
@@ -30,7 +32,7 @@ const AddModal = ({ formType, courseId = "" }: ModalProps) => {
           break;
 
         case "ADD_SET":
-          setButtonText("Create Set");
+          setButtonText("Add set");
           setSchema(CreateSetHookForm)
           setDefaultValues({
               title: "",
@@ -39,7 +41,7 @@ const AddModal = ({ formType, courseId = "" }: ModalProps) => {
           break;
         
         case "ADD_EXAM_SET":
-          setButtonText("Create Exam Set");
+          setButtonText("Add an Exam");
           setSchema(CreateExamSetHookForm);
           setDefaultValues({
               title: "",
@@ -63,7 +65,7 @@ const AddModal = ({ formType, courseId = "" }: ModalProps) => {
           </div>
       </div>
     }
-    <button onClick={() => setIsOpen(true)} className='col-start-4 col-end-7 flex w-[97%] justify-center mt-[40px] bg-[#6366F1] hover:bg-[#898BF4] py-[17px] rounded-[10px]'><span className='text-white text-[24px] font-sora font-semibold'>{buttonText}</span></button>
+    <button onClick={() => setIsOpen(true)} className='flex w-[97%] justify-center bg-[#6366F1] hover:bg-[#898BF4] py-[17px] rounded-[10px]'><span className='text-white text-[24px] font-sora font-semibold'>{buttonText}</span></button>
     </>
   )
 }

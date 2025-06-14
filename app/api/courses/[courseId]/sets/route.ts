@@ -50,7 +50,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ courseI
 
         if (!validatedData.success) throw new ValidationError(validatedData.error.flatten().fieldErrors);
 
-        const set = await parseMaterials(files, courseId, "Regular", session, title);
+        const set = await parseMaterials({
+            files,
+            courseId,
+            setType: "Regular",
+            session,
+            passedTitle: title
+        })
 
         await session.commitTransaction();
 

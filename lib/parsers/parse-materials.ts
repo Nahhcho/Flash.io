@@ -1,5 +1,5 @@
 import FlashcardSet from "@/database/flashcard-set.model";
-import { ClientSession } from "mongoose";
+import { ClientSession, Types } from "mongoose";
 import { FlashcardSetSchema, MaterialSchemaBeforeCreate } from "../validations";
 import { NotFoundError, ValidationError } from "../http-errors";
 import Material from "@/database/material.model";
@@ -7,17 +7,28 @@ import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { gptTextToFlashCards } from "./parse-gpt-text";
 import { flashcardGenPrompt } from "@/constants/flashcardGenPrompt";
+import mongoose from "mongoose";
 
-export async function parseMaterials(
-    files: File[],
-    courseId: string,
-    setType: "Exam" | "Regular" = "Regular",
-    session: ClientSession,
-    passedTitle?: string,
-    examDate?: Date
-) {
+interface ParseMaterialsProps {
+    files: File[];
+    courseId: string;
+    setType: "Exam" | "Regular";
+    session: ClientSession;
+    passedTitle?: string;
+    studyPlanId?: Types.ObjectId;
+}
+
+export async function parseMaterials({
+    files,
+    courseId,
+    setType = "Regular",
+    session,
+    passedTitle = undefined,
+    studyPlanId = undefined,
+}: ParseMaterialsProps) {
     try {
-        if (files.length < 1) return;
+        console.log("Parse Materials function reached.")
+        if (files.length < 1) throw new Error("Files required");
         console.log("Parse Materials Hit")
 
         const mammoth = (await import("mammoth")).default;
@@ -43,9 +54,8 @@ export async function parseMaterials(
         
         const [flashCardSet] = await FlashcardSet.create([{
             courseId,
+            studyPlanId: setType === "Exam" ? new mongoose.Types.ObjectId(studyPlanId) : undefined,
             type: setType,
-            examDate,
-            currentSetCompletionDate: setType === "Exam" ? new Date() : undefined
         }], { session })
     
         let extractedText = ""

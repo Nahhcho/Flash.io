@@ -67,7 +67,7 @@ const CourseQuiz = () => {
 
     useEffect(() => {
         if (!loading && index === flashcards.length && set && set.type === "Exam" && set.completed == false) {
-            iterateExamSet(set._id.toString(), weakIds);
+            iterateExamSet(set._id.toString(), weakIds, rightCount, wrongCount, Math.floor((100/flashcards.length)*(rightCount)), secondsElapsed);
         }
     }, [loading, index, set, weakIds, flashcards.length]);
 

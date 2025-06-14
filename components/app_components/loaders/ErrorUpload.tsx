@@ -17,7 +17,7 @@ const ErrorUpload = ({ setIsOpen }: {  setIsOpen: Dispatch<SetStateAction<boolea
       </div>
       <div className='flex flex-col items-center justify-center font-sora text-[26px]'>
         <span className='text-[#D84949]'>Error uploading files...</span>
-        <span className='text-[18px] text-[#a0655d]'>FACKKKKKK</span>
+        <span className='text-[18px] text-[#a0655d]'>Please email me at jimmyb0910202@gmail.com</span>
         <div onClick={() => {setIsOpen(false)}} className='flex mt-2 items-center justify-center gap-2 w-[200px] rounded-[10px] border-2 border-[#a0655d] cursor-pointer hover:border-[#D84949]'>
             <p className='font-sora text-[#D84949] text-[18px] py-1'>Close</p> 
         </div>

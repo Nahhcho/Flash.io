@@ -6,12 +6,14 @@ import { Path, PathValue, SubmitHandler, useForm } from "react-hook-form"
 import Image from "next/image";
 import { ALLOWED_FILES } from "@/constants/allowedFileTypes";
 import { CreateCourse } from "@/lib/actions/course.action";
-import { CreateExamSet, CreateSet } from "@/lib/actions/set.action";
+import { CreateSet } from "@/lib/actions/set.action";
 import { Input } from "@/components/ui/input";
 import FileUpload from "../loaders/FileUpload";
 import ErrorUpload from "../loaders/ErrorUpload";
+import { CreateStudyPlan } from "@/lib/actions/studyPlan.action";
 
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface CreateFormProps<TSchema extends ZodType<any, any, any>> {
   formType: "ADD_COURSE" | "ADD_SET" | "ADD_EXAM_SET";
   schema: TSchema;
@@ -22,6 +24,7 @@ interface CreateFormProps<TSchema extends ZodType<any, any, any>> {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CreateForm = <TSchema extends ZodType<any, any, any>>({
     setIsOpen,
     isSubmitting,
@@ -31,9 +34,9 @@ const CreateForm = <TSchema extends ZodType<any, any, any>>({
     schema,
     courseId
 }: CreateFormProps<TSchema>) => {
-    const buttonText = formType === "ADD_COURSE" ? "Create Course" : "Add Set";
+    const buttonText = formType === "ADD_COURSE" ? "Add Course" : formType === "ADD_SET" ? "Add set" : "Add exam";
     const optional = formType === "ADD_COURSE" ? "(optional)" : "";
-    const header = formType === "ADD_COURSE" ? "Course" : formType === "ADD_EXAM_SET" ? "Exam Set" : "Set";
+    const header = formType === "ADD_COURSE" ? "Course" : formType === "ADD_EXAM_SET" ? "Exam " : "Set";
     const form = useForm<z.infer<TSchema>>(
         {
             resolver: zodResolver(schema),
@@ -50,21 +53,24 @@ const CreateForm = <TSchema extends ZodType<any, any, any>>({
             case "ADD_COURSE":
                 res = await CreateCourse(data);
                 break;
-            
-            case "ADD_SET":
+                
+                case "ADD_SET":
                 res = await CreateSet(data, courseId as string)
-                if (res.success) setIsOpen(false)
+                console.log("GPT says this log should show up now")
+                if (res.success) {
+                    setIsOpen(false);
+                }
                 break;
 
             case "ADD_EXAM_SET":
-                res = await CreateExamSet(data, courseId as string);
-                if (res.success) setIsOpen(false)
+                res = await CreateStudyPlan({...data, courseId });
                 break;
         }
 
-        setError(!res.success);
-        if (res.success || !res.success) setIsOpen(false)
-
+        if (!res.success) {
+            setIsSubmitting(false)
+            setError(true)
+        }
     };
 
     function isFileList(value: unknown): value is FileList {

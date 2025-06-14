@@ -35,47 +35,49 @@ export function flashcardGenPrompt(content: string) {
 }
 
 export function focusedFlashcardGenPrompt(content: string, weakPoints: string, dueDate: Date) {
-    return ( 
-        `
-        You are generating flashcards from educational content and weak points of the user from a previous flashcard set. Focus especially on the weak points.
+  const currentDate = new Date();
 
-        You will also be given the date of the user's upcoming exam. Include a date called "dateToComplete" that represents when the user should complete this new flashcard set — it must be before the exam date and after today. Choose a date that supports spaced repetition and active recall, and is also closer to today.
+  return (
+    `
+You are generating flashcards from educational content and the user's weak points from a previous flashcard set. Your goal is to create a new flashcard set that helps the user actively recall and reinforce concepts — especially the weak ones.
 
-        The weak points will be provided in Q/A pairs.
+The user has an upcoming exam. At the end of your response, include:
+**dateToComplete: <ISO string>**
 
-        Please strictly follow this format for each flashcard:
-        Q: <question>
-        A: <answer>
+### Rules for dateToComplete:
+- Must be after currentDate (not the same day).
+- Must NOT be after examDate.
+- Can be the same day as examDate (for final review).
+- Strongly bias the date closer to currentDate than to examDate (ideally within 1–3 days after today).
+- Avoid long gaps between quizzes unless absolutely necessary.
 
-        Start your response with a set title in this format:
-        title: <a short, relevant title for the entire set> (MAX 30 characters)
+### Flashcard format:
+Start with a short set title:
+**title: <max 30 characters>**
 
-        End your response with:
-        dateToComplete: <ISO string format>
+Then list Q/A pairs like this (no extra formatting or numbering):
 
-        Example:
+Q: <question>
+A: <answer>
 
-        title: Biology Basics  
-        Q: What is the basic unit of life?  
-        A: The cell.  
-        Q: What is DNA responsible for?  
-        A: Carrying genetic information.  
-        dateToComplete: 2025-06-10T23:04:32.481Z
+End with:
+**dateToComplete: <ISO string format>**
 
-        Rules:
-        - DO NOT use markdown or extra formatting.
-        - Each Q/A pair must be on its own line and follow the format exactly.
-        - Keep questions concise and factual.
-        - Do not repeat or slightly rephrase questions.
-        - Generate enough flashcards to meaningfully cover all content provided.
+### Style guide:
+- Do NOT use markdown.
+- Do NOT include explanations or headings.
+- Each Q/A must be on its own line.
+- Questions should be concise, fact-based, and non-redundant.
+- Cover key concepts from the content while prioritizing weak points.
 
-        Here is the content and weak points to generate flashcards from:
-        """
-        content: ${content}
-        weak points: ${weakPoints}
-        exam date: ${dueDate.toISOString()}
-        currentDate: ${new Date().toISOString()}
-        """
-        `
-    )
+---
+
+Here is the input for generating flashcards:
+
+content: ${content}
+weak points: ${weakPoints}
+exam date: ${dueDate.toISOString()}
+currentDate: ${currentDate.toISOString()}
+`
+  );
 }

@@ -4,23 +4,19 @@ import { ErrorResponse } from "@/types/global";
 import { api } from "../api";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { CreateExamSetHookForm } from "../validations";
 import dbconnect from "../mongoose";
 import mongoose from "mongoose";
 import handlerError from "../handlers/error";
 import { NotFoundError } from "../http-errors";
-import { parseMaterials } from "../parsers/parse-materials";
-import FlashcardSet, { IFlashcardSetDoc } from "@/database/flashcard-set.model";
-import Course, { ICourseDoc } from "@/database/course.model";
-import { auth } from "@/auth";
-import { getSunSat } from "../utils/dateLogic";
+import FlashcardSet from "@/database/flashcard-set.model";
 import Flashcard, { IFlashcardDoc } from "@/database/flashcard.model";
 import Material, { IMaterialDoc } from "@/database/material.model";
 import { focusedFlashcardGenPrompt } from "@/constants/flashcardGenPrompt";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { gptTextToFlashCards } from "../parsers/parse-gpt-text";
+import StudyPlan from "@/database/study-plan.model";
+import { toLocalMidnight } from "../utils/dateLogic";
 
 export async function CreateSet<T extends {title: string, materials: FileList}>(data: T, courseId: string) {
     const formData = new FormData();
@@ -43,37 +39,34 @@ export async function CreateSet<T extends {title: string, materials: FileList}>(
     }
 
     revalidatePath(`/courseDetails/${courseId}`);
-    redirect(`/courseDetails/${courseId}`);
+    
+    return { success: true, data: response, status: 201 }
 }
 
-export async function CreateExamSet<T extends z.infer<typeof CreateExamSetHookForm>>(data: T, courseId: string) {
+export async function DeleteSet(setId: string) {
     await dbconnect();
     const session = await mongoose.startSession();
     session.startTransaction();
-
+    let courseId: string;
     try {
-        console.log("Exam set post hit: ", data)
-        const { title, materials, examDate } = data;
- 
-        if (!courseId) throw new NotFoundError("courseId");
+        const set = await FlashcardSet.findByIdAndDelete(setId, { session });
+        await Flashcard.deleteMany({ setId }, { session });
+        
+        courseId = set.courseId
 
-        console.log("Exam set parse reached")
-        const examSet = await parseMaterials([...materials], courseId, "Exam", session, title, examDate);
+        await session.commitTransaction();  
 
-        await session.commitTransaction();
-        revalidatePath(`/courseDetails/${courseId}`)
-
-        return {success: true, data: examSet, status: 201}
     } catch (error) {
         await session.abortTransaction();
-        console.log(error)
+        
         return handlerError(error) as ErrorResponse;
     } finally {
         await session.endSession();
     }
+    redirect(`/courseDetails/${courseId}`)
 }
 
-export async function iterateExamSet(setId: string, weakIds: string[]) {
+export async function iterateExamSet(setId: string, weakIds: string[], rightCount: number, wrongCount: number, percentage: number, totalSeconds: number) {
     await dbconnect();
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -94,11 +87,24 @@ export async function iterateExamSet(setId: string, weakIds: string[]) {
             weakPoints += `Q: ${flashCard.question}/A: ${flashCard.answer}`
         ))
 
+        console.log("attempting study plan search")
         const oldExamSet = await FlashcardSet.findById(setId);
+        console.log("studyplan found")
+        const studyPlan = await StudyPlan.findById(oldExamSet.studyPlanId);
+
+        studyPlan.completedQuizzes += 1;
+        studyPlan.totalRightCount += rightCount;
+        studyPlan.totalWrongCount += wrongCount;
+        studyPlan.totalSeconds += totalSeconds;
+        await studyPlan.save({session});
 
         if (!oldExamSet) throw new NotFoundError("old exam set");
 
         oldExamSet.completed = true;
+        oldExamSet.totalSeconds = totalSeconds;
+        oldExamSet.rightCount = rightCount;
+        oldExamSet.wrongCount = wrongCount;
+        oldExamSet.percentage = percentage;
         await oldExamSet.save({session})
 
         const materials: IMaterialDoc[] = await Material.find({setId});
@@ -111,14 +117,20 @@ export async function iterateExamSet(setId: string, weakIds: string[]) {
             content += mat.parsedText
         ));
         
+        const title = studyPlan.title + ` Review ${studyPlan.completedQuizzes + 1}`;
+
+        console.log("attempting set creation with study plan id: ", studyPlan._id);
+        console.log(title)
         const [newExamSet] = await FlashcardSet.create([{
+            title,
             courseId: oldExamSet.courseId,
             type: "Exam",
-            examDate: oldExamSet.examDate,
+            studyPlanId: studyPlan._id,
         }], {session});
+        console.log("new set created: ", newExamSet)
 
-        const prompt = focusedFlashcardGenPrompt(content, weakPoints, oldExamSet.examDate);
-        
+        const prompt = focusedFlashcardGenPrompt(content, weakPoints, studyPlan.examDate);
+
         console.log("gpt reached")
         const { text: gptText } = await generateText({
             model: openai("gpt-4o-mini"),
@@ -126,18 +138,20 @@ export async function iterateExamSet(setId: string, weakIds: string[]) {
         })
 
         console.log("gpt finished");
-        const { terms, title, currentSetCompletionDate } = await gptTextToFlashCards({
+        const { terms, suggestedTitle, currentSetCompletionDate } = await gptTextToFlashCards({
             gptText,
             session,
             setId: newExamSet._id
         });
 
-        newExamSet.title = title;
         newExamSet.terms = terms;
-        newExamSet.currentSetCompletionDate = currentSetCompletionDate;
+        newExamSet.dueDate = toLocalMidnight(currentSetCompletionDate!);
         await newExamSet.save({session})
 
         await session.commitTransaction();
+
+        console.log("iteration complete! NewExamSet: ", newExamSet);
+        console.log("Updated old completed exam set: ", oldExamSet);
 
         revalidatePath("/")
 
@@ -151,81 +165,3 @@ export async function iterateExamSet(setId: string, weakIds: string[]) {
     }
 }
 
-export async function getWeeksExamSets() {
-    await dbconnect();
-
-    try {
-        const userSession = await auth();
-
-        if (!userSession || !userSession.user || !userSession.user.id) throw new NotFoundError("userId");
-
-        const userId = userSession.user.id;
-
-        const courses: ICourseDoc[] = await Course.find({ userId });
-
-        const { sunday, saturday } = getSunSat();
-
-        const examSets = (
-        await Promise.all(
-            courses.map((course) =>
-            FlashcardSet.find({
-                courseId: course._id,
-                currentSetCompletionDate: {
-                $gte: sunday,
-                $lte: saturday,
-                },
-            })
-            )
-        )
-        )
-
-        const flatSets: IFlashcardSetDoc[] = examSets.flat();
-
-        return { success: true, data: flatSets, status: 200 };
-        
-    } catch (error) {
-
-        return handlerError(error) as ErrorResponse;
-    } 
-}
-
-export async function getTodayExamSets() {
-  await dbconnect();
-
-  try {
-    const userSession = await auth();
-    if (!userSession?.user?.id) throw new NotFoundError("userId");
-    const userId = userSession.user.id;
-
-    // 1) fetch all of this user's courses
-    const courses: ICourseDoc[] = await Course.find({ userId });
-
-    // 2) build "start of today" and "start of tomorrow"
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfTomorrow = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1
-    );
-
-    // 3) for each course, only grab sets completed today
-    const examSetsArrays = await Promise.all(
-      courses.map(course =>
-        FlashcardSet.find({
-          courseId: course._id,
-          currentSetCompletionDate: {
-            $gte: startOfDay,
-            $lt: startOfTomorrow,
-          },
-        })
-      )
-    );
-
-    // 4) flatten and return
-    const flatSets: IFlashcardSetDoc[] = examSetsArrays.flat();
-    return { success: true, data: flatSets, status: 200 };
-  } catch (error) {
-    return handlerError(error) as ErrorResponse;
-  }
-}

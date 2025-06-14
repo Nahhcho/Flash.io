@@ -6,11 +6,10 @@ export function formatDate(date: Date): string {
     return `${mm}/${dd}/${yyyy}`
 }
 
-export function getSunSat() {
-    const today = new Date();
+export function getSunSat(viewDate: Date) {
 
-    const sunday = new Date(today);
-    sunday.setDate(today.getDate() - today.getDay()); // Sunday
+    const sunday = new Date(viewDate);
+    sunday.setDate(viewDate.getDate() - viewDate.getDay()); // Sunday
 
     const saturday = new Date(sunday);
     saturday.setDate(sunday.getDate() + 6); // Saturday
@@ -20,4 +19,10 @@ export function getSunSat() {
     saturday.setHours(23, 59, 59, 999);
 
     return { sunday, saturday };
+}
+
+export function toLocalMidnight(date: Date): Date {
+  const local = new Date(date);
+  local.setHours(0, 0, 0, 0);
+  return local;
 }

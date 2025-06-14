@@ -14,6 +14,8 @@ export const api = {
                 })
             }
         ),
+        getAllExamSets: (userId: string) => fetchHandler(`${API_BASE_URL}/users/${userId}/examSets`),
+        getStudyPlans: (userId: string) => fetchHandler(`${API_BASE_URL}/users/${userId}/studyPlans`)
     },
     courses: {
         getAll: (userId: string) => fetchHandler(`${API_BASE_URL}/users/${userId}/courses`, {
@@ -25,7 +27,7 @@ export const api = {
             body: formData
         }),
         getSets: (courseId: string) => fetchHandler(`${API_BASE_URL}/courses/${courseId}/sets`),
-    },
+        getStudyPlans: (courseId: string) => fetchHandler(`${API_BASE_URL}/courses/${courseId}/studyPlans`),    },  
     auth: {
         oAuthSignIn: ({ user, provider, providerAccountId }: SignInWithOAuthParams) => fetchHandler(`${API_BASE_URL}/${ROUTES.SIGN_IN_WITH_OAUTH}`, {
             method: "POST",
