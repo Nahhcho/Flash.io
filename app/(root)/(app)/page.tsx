@@ -13,6 +13,7 @@ import { redirect } from 'next/navigation'
 import { IFlashcardSetDoc } from '@/database/flashcard-set.model'
 import { toLocalMidnight } from '@/lib/utils/dateLogic'
 import NoCalanderDiv from '@/components/app_components/calendarPlaceHolders/NoCalenderDiv'
+import { IStudyPlanDoc } from '@/database/study-plan.model'
 
 
 const App = async () => {
@@ -41,6 +42,8 @@ const App = async () => {
         }
     })
     const progress = numberOfQuizzes === 0 ? 0 : numberOfCompletedQuizzes / numberOfQuizzes;
+    const resAgain = await api.user.getStudyPlans(session.user.id!)
+    const studyPlans: IStudyPlanDoc[] = resAgain.data as IStudyPlanDoc[]
 
     if (courses?.length === 0) {
         return (
@@ -63,7 +66,7 @@ const App = async () => {
                 Your Study Plan
                 <UserAvatar image={session?.user?.image} />
             </header>
-            { courses && <Calendar courses={courses} examSets={examSets}/> }
+            { courses && <Calendar studyPlans={studyPlans} courses={courses} examSets={examSets}/> }
             <div className='col-start-4 col-end-12 pt-[40px]'>
                 <ProgressBar progress={(progress) * 100} displayHome={true}/>
             </div>

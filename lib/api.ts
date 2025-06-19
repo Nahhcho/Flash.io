@@ -55,6 +55,7 @@ export const api = {
 
     },
     studyPlans: {
-        get: (studyPlanId: string) => fetchHandler(`${API_BASE_URL}/studyPlans/${studyPlanId}`) 
+        get: (studyPlanId: string) => fetchHandler(`${API_BASE_URL}/studyPlans/${studyPlanId}`),
+        getSets: (studyPlanId: string) => fetchHandler(`${API_BASE_URL}/studyPlans/${studyPlanId}/sets`),
     }
 }
