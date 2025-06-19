@@ -55,7 +55,7 @@ const AddModal = ({ formType, courseId = "" }: ModalProps) => {
   return (
     <>
     { isOpen &&
-      <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 w-screen'  onClick={() => {
+      <div className='fixed inset-0 bg-black/50 flex text-left items-center justify-center z-50 w-screen'  onClick={() => {
         if (!isSubmitting) {
           setIsOpen(false)
         }

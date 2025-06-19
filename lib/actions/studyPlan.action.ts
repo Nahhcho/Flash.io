@@ -10,7 +10,6 @@ import { ValidationError } from "../http-errors";
 import { parseMaterials } from "../parsers/parse-materials";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { toLocalMidnight } from "../utils/dateLogic";
 
 type Props = {
     title: string,
@@ -26,7 +25,9 @@ export async function CreateStudyPlan({ title, materials, examDate, courseId }: 
 
     try {
         console.log("Study plan hit");
-        console.log("materials: ", materials)
+        console.log("examDate iso: ", examDate)
+        examDate = new Date(examDate)
+        console.log("examDate utc: ", examDate)
         const validatedData = StudyPlanSchema.safeParse({ title, materials, examDate, courseId });
 
         if (!validatedData.success) {
@@ -36,8 +37,8 @@ export async function CreateStudyPlan({ title, materials, examDate, courseId }: 
         const [studyPlan] = await StudyPlan.create([{
             title,
             courseId,
-            examDate: toLocalMidnight(examDate),
-            startDate: toLocalMidnight(new Date()),
+            examDate,
+            startDate: new Date(),
         }], { session });
 
         const setTitle = title + " Review 1"
@@ -49,7 +50,7 @@ export async function CreateStudyPlan({ title, materials, examDate, courseId }: 
             passedTitle: setTitle,
             studyPlanId: studyPlan._id,
         });
-        firstExamSet.dueDate = toLocalMidnight(new Date());
+        firstExamSet.dueDate = new Date();
         await firstExamSet.save({session});
 
         await session.commitTransaction();

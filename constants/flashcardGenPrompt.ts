@@ -45,11 +45,13 @@ The user has an upcoming exam. At the end of your response, include:
 **dateToComplete: <ISO string>**
 
 ### Rules for dateToComplete:
-- Must be after currentDate (not the same day).
+- MUST be after currentDate (not the same day).
 - Must NOT be after examDate.
 - Can be the same day as examDate (for final review).
 - Strongly bias the date closer to currentDate than to examDate (ideally within 1–3 days after today).
+- If the current date within 1-2 day to exam date then set dateToComplete the same as exam date. 
 - Avoid long gaps between quizzes unless absolutely necessary.
+- dateToComplete CANNOT BE SAME AS CURRENT DATE.
 
 ### Flashcard format:
 Start with a short set title:
@@ -61,7 +63,7 @@ Q: <question>
 A: <answer>
 
 End with:
-**dateToComplete: <ISO string format>**
+dateToComplete: <ISO string format>
 
 ### Style guide:
 - Do NOT use markdown.

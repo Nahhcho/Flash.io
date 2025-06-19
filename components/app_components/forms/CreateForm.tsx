@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import FileUpload from "../loaders/FileUpload";
 import ErrorUpload from "../loaders/ErrorUpload";
 import { CreateStudyPlan } from "@/lib/actions/studyPlan.action";
+import { formatDate } from "@/lib/utils/dateLogic";
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,7 +64,8 @@ const CreateForm = <TSchema extends ZodType<any, any, any>>({
                 break;
 
             case "ADD_EXAM_SET":
-                res = await CreateStudyPlan({...data, courseId });
+                data.examDate.setDate(data.examDate.getDate() + 1);
+                res = await CreateStudyPlan({...data, examDate: formatDate(data.examDate), startDate: formatDate(new Date()), courseId });
                 break;
         }
 

@@ -9,6 +9,8 @@ import DeleteModal from '@/components/app_components/modals/DeleteModal'
 import { IStudyPlanDoc } from '@/database/study-plan.model'
 import CourseCalendar from '@/components/app_components/calendars/CourseCalendar'
 import { toLocalMidnight } from '@/lib/utils/dateLogic'
+import NoCalanderDiv from '@/components/app_components/calendarPlaceHolders/NoCalenderDiv'
+import StudyPlanCard from '@/components/app_components/cards/StudyPlanCard'
 
 
 
@@ -28,6 +30,7 @@ const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }> 
 
   res = await api.courses.getStudyPlans(courseId);
   const studyPlans = res.success ? res.data as IStudyPlanDoc[] : null
+  console.log("Course study plans!: ", studyPlans)
 
   const examSets: IFlashcardSetDoc[] = sets.filter(
     (set) => set.type === "Exam"
@@ -42,11 +45,29 @@ const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }> 
         </div>
           <hr className=' w-full border-[#2E3D52]'/>
       </div>
+      {
+        !studyPlans || (studyPlans && studyPlans.length === 0) && <>
+        <div className='col-start-4 col-end-13'>
+          <NoCalanderDiv type='StudyPlans' courseName={course!.title!} courseId={course?._id.toString()}/>
+        </div>
+      </>}
+    {
+      studyPlans && studyPlans?.length > 0 && <>
       
             {examSets && studyPlans && 
             <>
               <span className='col-start-4 col-end-13 font-sora text-white text-[32px] pt-[40px]'>{course?.title} Study Plan</span>
               <CourseCalendar studyPlans={studyPlans} examSets={examSets} courseId={courseId}/>
+
+              <div className='col-start-4 col-end-13 mt-[80px]'>
+                <p className='font-sora text-white text-[32px] pb-[20px]'>Your current study plans</p>
+        
+                <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] col-start-4 col-end-13'>  
+                  {studyPlans.map((sp) => (
+                    <StudyPlanCard key={sp._id.toString()} sp={sp}/>
+                  ))}
+                </div>
+              </div>
             </>
             }
 
@@ -87,10 +108,11 @@ const CourseDetails = async ({ params }: {params: Promise<{ courseId: string }> 
 
           <div className='grid grid-cols-3 gap-[20px] gap-y-[40px] col-start-4 col-end-13'>
               {sets.map((set: IFlashcardSetDoc) => (
-                  set.type === "Exam" && !set.completed && <SetCard key={set._id.toString()} set={set}/>
+                  set.type === "Exam" && new Date(set.dueDate!).getDate() > new Date().getDate() && <SetCard key={set._id.toString()} set={set}/>
               ))}
           </div>
       </div>
+      </>}
 
 
       <div className='col-start-4 col-end-13 mt-[50px]'>

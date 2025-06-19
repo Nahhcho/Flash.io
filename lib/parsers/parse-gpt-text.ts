@@ -58,7 +58,9 @@ export async function gptTextToFlashCards({
                 await Flashcard.create([{question: curQ, answer: curA, setId}], {session});
                 terms++;
             }
-    
+            
+            console.log("Due date from parse-gpt-text: ", currentSetCompletionDate)
+
             return { title, terms, currentSetCompletionDate }
             
         } catch (error) {

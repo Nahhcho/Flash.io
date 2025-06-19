@@ -103,7 +103,7 @@ const CourseCalendar = ({ studyPlans, examSets, courseId }: { studyPlans: IStudy
         }}
       >
         <div className="flex flex-col gap-2 justify-start items-center h-full p-2 overflow-visible">
-          { sun && sat && toLocalMidnight(new Date(studyPlan.examDate)).getDay() === colIndex && toLocalMidnight(new Date(studyPlan.examDate)).getTime() >= sun.getTime() && toLocalMidnight(new Date(studyPlan.examDate)).getTime() <= sat.getTime() && 
+          {  sun && sat && new Date(studyPlan.examDate).getDay() === colIndex && new Date(studyPlan.examDate).getTime() >= sun.getTime() && new Date(studyPlan.examDate).getTime() <= sat.getTime() && 
               <div
                 key={studyPlan._id.toString()}
                 className="bg-[#557199] w-fit px-8 py-2 rounded-full relative motion-preset-shrink motion-duration-350"
@@ -118,8 +118,7 @@ const CourseCalendar = ({ studyPlans, examSets, courseId }: { studyPlans: IStudy
             ?.filter(es => {
                             if (!es.dueDate || !sun || !sat || studyPlan._id !== es.studyPlanId) return false
                             // make a new Date at local midnight for that same day:
-                            const dueUtc = new Date(es.dueDate);
-                            const dueLocalMidnight = toLocalMidnight(dueUtc);
+                            const dueLocalMidnight = new Date(es.dueDate);
             
                             return (
                               dueLocalMidnight.getTime() >= sun.getTime() &&

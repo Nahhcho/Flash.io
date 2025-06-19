@@ -53,5 +53,8 @@ export const api = {
             body: formData,
         })
 
+    },
+    studyPlans: {
+        get: (studyPlanId: string) => fetchHandler(`${API_BASE_URL}/studyPlans/${studyPlanId}`) 
     }
 }

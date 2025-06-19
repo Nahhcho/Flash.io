@@ -12,6 +12,7 @@ import SetCard from '@/components/app_components/cards/SetCard'
 import { redirect } from 'next/navigation'
 import { IFlashcardSetDoc } from '@/database/flashcard-set.model'
 import { toLocalMidnight } from '@/lib/utils/dateLogic'
+import NoCalanderDiv from '@/components/app_components/calendarPlaceHolders/NoCalenderDiv'
 
 
 const App = async () => {
@@ -40,15 +41,29 @@ const App = async () => {
         }
     })
     const progress = numberOfQuizzes === 0 ? 0 : numberOfCompletedQuizzes / numberOfQuizzes;
-        
-  return (
-   
-        <> 
+
+    if (courses?.length === 0) {
+        return (
+            <>
             <header className='flex justify-between items-center font-sora text-[32px] col-start-4 col-end-13 font-semibold text-white'>
                 Your Study Plan
                 <UserAvatar image={session?.user?.image} />
             </header>
-            { courses && <Calendar courses={courses}  examSets={examSets}/> }
+                <div className='col-start-4 col-end-13'>
+                    <NoCalanderDiv type='Courses' />
+                </div>
+            </>
+        )
+    }
+        
+  return (
+   
+        <>
+            <header className='flex justify-between items-center font-sora text-[32px] col-start-4 col-end-13 font-semibold text-white'>
+                Your Study Plan
+                <UserAvatar image={session?.user?.image} />
+            </header>
+            { courses && <Calendar courses={courses} examSets={examSets}/> }
             <div className='col-start-4 col-end-12 pt-[40px]'>
                 <ProgressBar progress={(progress) * 100} displayHome={true}/>
             </div>

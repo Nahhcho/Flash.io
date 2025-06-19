@@ -106,8 +106,7 @@ const Calendar = ({ courses, examSets, studyPlans }: { courses: ICourseDoc[], ex
             ?.filter(es => {
                 if (!es.dueDate || !sun || !sat || course._id !== es.courseId) return false
                 // make a new Date at local midnight for that same day:
-                const dueUtc = new Date(es.dueDate);
-                const dueLocalMidnight = toLocalMidnight(dueUtc);
+                const dueLocalMidnight = new Date(es.dueDate);
 
                 return (
                   dueLocalMidnight.getTime() >= sun.getTime() &&

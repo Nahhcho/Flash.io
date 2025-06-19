@@ -16,7 +16,6 @@ import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { gptTextToFlashCards } from "../parsers/parse-gpt-text";
 import StudyPlan from "@/database/study-plan.model";
-import { toLocalMidnight } from "../utils/dateLogic";
 
 export async function CreateSet<T extends {title: string, materials: FileList}>(data: T, courseId: string) {
     const formData = new FormData();
@@ -117,35 +116,46 @@ export async function iterateExamSet(setId: string, weakIds: string[], rightCoun
             content += mat.parsedText
         ));
         
-        const title = studyPlan.title + ` Review ${studyPlan.completedQuizzes + 1}`;
-
+        
         console.log("attempting set creation with study plan id: ", studyPlan._id);
-        console.log(title)
         const [newExamSet] = await FlashcardSet.create([{
-            title,
             courseId: oldExamSet.courseId,
             type: "Exam",
             studyPlanId: studyPlan._id,
         }], {session});
         console.log("new set created: ", newExamSet)
-
+        
         const prompt = focusedFlashcardGenPrompt(content, weakPoints, studyPlan.examDate);
-
+        
         console.log("gpt reached")
         const { text: gptText } = await generateText({
             model: openai("gpt-4o-mini"),
             prompt
         })
-
+        console.log("gpt response: ", gptText)
+        
         console.log("gpt finished");
         const { terms, suggestedTitle, currentSetCompletionDate } = await gptTextToFlashCards({
             gptText,
             session,
             setId: newExamSet._id
         });
+        
+        const today = new Date();
+        const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const examMidnight = new Date(studyPlan.examDate.getFullYear(), studyPlan.examDate.getMonth(), studyPlan.examDate.getDate());
 
-        newExamSet.terms = terms;
-        newExamSet.dueDate = toLocalMidnight(currentSetCompletionDate!);
+        const diffInDays = Math.round((examMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffInDays <= 2) {
+            newExamSet.dueDate = studyPlan.examDate;
+            newExamSet.title = studyPlan.title + " Review Final";
+        } else {
+            newExamSet.dueDate = currentSetCompletionDate!;
+            newExamSet.title = studyPlan.title + ` Review ${studyPlan.completedQuizzes + 1}`;
+        }
+
+        newExamSet.terms = terms
         await newExamSet.save({session})
 
         await session.commitTransaction();
